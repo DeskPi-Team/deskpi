@@ -81,6 +81,7 @@ int main(void){
 	char buff[255];
 	char ch;
 	int num;
+	char data[7];
 
 	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
 	if (fgets(buff, 255, (FILE*)fp)!= NULL){
@@ -92,18 +93,45 @@ int main(void){
 /* check the temperature level and send pwm to serial port */
 	if ( num < 45000){
  		printf("buff is less than 45000\n");
-
+		data[0] = 'p';
+		data[1] = 'w';
+		data[2] = 'm';
+		data[3] = '0';
+		data[4] = '2';
+		data[5] = '5';
+		data[6] = '\0';
 	}
 	else if ( num > 50000 & num < 60000){
  		printf("buff is greater than 50000 and less than 60000\n");
+		data[0] = 'p';
+		data[1] = 'w';
+		data[2] = 'm';
+		data[3] = '0';
+		data[4] = '5';
+		data[5] = '0';
+		data[6] = '\0';
  	}
 	else if ( num > 60000 & num < 70000){
  		printf("buff is greater than 60000 less then 70000\n");
+		data[0] = 'p';
+		data[1] = 'w';
+		data[2] = 'm';
+		data[3] = '0';
+		data[4] = '7';
+		data[5] = '5';
+		data[6] = '\0';
 	}
 	else if ( num > 70000){
  		printf("buff is greater than 70000\n");
+		data[0] = 'p';
+		data[1] = 'w';
+		data[2] = 'm';
+		data[3] = '1';
+		data[4] = '0';
+		data[5] = '0';
+		data[6] = '\0';
 	}
-	write(serial_port, strcat(str1, str2), sizeof(strcat(str1, str2)));
+	write(serial_port, data, sizeof(data));
 	close(serial_port);
 	printf("Send Temperature %d times\n", n+=1);
 	sleep(1);
