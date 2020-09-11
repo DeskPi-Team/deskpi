@@ -28,7 +28,7 @@ int main(void){
 	pinMode(PWM_pin, PWM_OUTPUT);  /* Set PWM pin as output */
 
 	while(1){
- 		int serial_port = open("/dev/ttyAMA0", O_RDWR);
+ 		int serial_port = open("/dev/ttyUSB0", O_RDWR);
 		if (serial_port < 0){
 			printf("Error $i from open: %s\n", errno, strerror(errno));
  			}
@@ -69,8 +69,8 @@ int main(void){
 	tty.c_cc[VTIME] = 10;
 	tty.c_cc[VMIN] = 0;
 
-	cfsetispeed(&tty, B115200);
-	cfsetospeed(&tty, B115200);
+	cfsetispeed(&tty, B9600);
+	cfsetospeed(&tty, B9600);
 
 	if (tcsetattr(serial_port, TCSANOW, &tty) !=0){
 		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
@@ -81,7 +81,7 @@ int main(void){
 	char buff[255];
 	char ch;
 	int num;
-	char data[7];
+	char data[8];
 
 	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
 	if (fgets(buff, 255, (FILE*)fp)!= NULL){
@@ -96,43 +96,48 @@ int main(void){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
-		data[3] = '0';
-		data[4] = '2';
-		data[5] = '5';
-		data[6] = '\0';
+		data[3] = '_';
+		data[4] = '0';
+		data[5] = '2';
+		data[6] = '5';
+		data[7] = '\0';
 	}
 	else if ( num > 50000 & num < 60000){
  		printf("buff is greater than 50000 and less than 60000\n");
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
-		data[3] = '0';
-		data[4] = '5';
-		data[5] = '0';
-		data[6] = '\0';
+		data[3] = '_';
+		data[4] = '0';
+		data[5] = '5';
+		data[6] = '0';
+		data[7] = '\0';
  	}
 	else if ( num > 60000 & num < 70000){
  		printf("buff is greater than 60000 less then 70000\n");
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
-		data[3] = '0';
-		data[4] = '7';
-		data[5] = '5';
-		data[6] = '\0';
+		data[3] = '_';
+		data[4] = '0';
+		data[5] = '7';
+		data[6] = '5';
+		data[7] = '\0';
 	}
 	else if ( num > 70000){
  		printf("buff is greater than 70000\n");
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
-		data[3] = '1';
-		data[4] = '0';
+		data[3] = '_';
+		data[4] = '1';
 		data[5] = '0';
-		data[6] = '\0';
+		data[6] = '0';
+		data[7] = '\0';
 	}
 	write(serial_port, data, sizeof(data));
 	close(serial_port);
+	printf("Send data %s\n",  data);
 	printf("Send Temperature %d times\n", n+=1);
 	sleep(1);
 	}
