@@ -1,16 +1,22 @@
 # Control Your Fan througn PWM signal via Serial port(OTG)
 ## C Language
-## How to compile it.
+* 1. At First, get the demo code from github.
+```bash
+cd ~
+git clone https://github.com/DeskPi-Team/deskpi.git
+cd ~/deskpi/drivers/c/
+```
+* 2. How to compile it.
 ```bash
 make 
 ```
-## How to run it.
+* 3. How to run it.
 ```bash
 sudo ./pwmFanControl
 ```
-## How to stop it.
-* Press "Ctrl + C"
-## How to clean the source code directory.
+* 4. How to stop it.
+Press "Ctrl + C"
+* 5. How to clean the source code directory.
 ```bash
 make clean
 ```
@@ -22,8 +28,11 @@ This program is send the pwm signal from Raspberry Pi to the extension board via
 ** Level 2: 50% speed-> send "pwm_050" to /dev/ttyUSB0", means to set fan speed to 50%
 ** Level 3: 75% speed-> send "pwm_075" to /dev/ttyUSB0", means to set fan speed to 75%
 ** Level 4:100% speed-> send "pwm_100" to /dev/ttyUSB0", means to set fan speed to 100%
-# In Python
+
+# Python
 ## How to control fan through PWM signal via serial port.
+You can also control your fan with python script.
+just remember to send "pwm_xxx" to "/dev/ttyUSB0" device. xxx means the level of your fan speed. from 0-100 (integer).
 ### 1. Install pyserial library.
 * Python2.x 
 ```bash
