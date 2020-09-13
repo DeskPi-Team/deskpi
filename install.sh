@@ -4,12 +4,15 @@ daemonname="deskpid"
 tempmonscript=/usr/bin/pmwfancontrol
 daemonfanservice=/lib/systemd/system/$daemonname.service
 fanshutdownservice=/lib/systemd/system-shutdown/$daemonname-shutdown.service
+installationfolder=/home/pi/deskpi
 
 # Create service file on system.
 sudo touch $fanshutdownservice 
 sudo chmod 666 $fanshutdownservice
 
 # install PWM fan control daemon.
+cd $installationfolder/drivers/c/
+make
 sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
 sudo chmod 666 /usr/bin/pwmFanControl

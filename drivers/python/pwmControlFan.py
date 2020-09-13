@@ -15,20 +15,15 @@ try:
 
             if cpu_temp > 35 and cpu_temp < 50:
                 ser.write(b'pwm_025')
-                print("speed level 25%")
             elif cpu_temp > 50 and cpu_temp < 65:
                 ser.write(b'pwm_050')
-                print("speed level 50%")
             elif cpu_temp > 65 and cpu_temp < 75:
                 ser.write(b'pwm_075')
-                print("speed level 75%")
             elif cpu_temp > 75:
                 ser.write(b'pwm_100')
-                print("speed level 100%")
 
 except KeyboardInterrupt:
     ser.write(b'pwm_000')
-    print("speed level 0%")
     ser.close()
 
 
