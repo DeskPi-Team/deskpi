@@ -11,6 +11,7 @@ sudo apt -y purge wiringpi && hash -r
 cd /tmp
 wget https://project-downloads.drogon.net/wiringpi-latest.deb
 sudo dpkg -i wiringpi-latest.deb
+rm /tmp/wiringpi-latest.deb
 
 # Create service file on system.
 if [ -e $deskpidaemon ]; then
@@ -31,13 +32,13 @@ sudo chmod 755 /usr/bin/fanStop
 echo "[Unit]" >> $deskpidaemon
 echo "Description=DeskPi Fan Service" >> $deskpidaemon
 echo "After=multi-user.target" >> $deskpidaemon
-echo "" >> $daemonfanservic 
+echo " " >> $daemonfanservic 
 echo "[Service]" >> $deskpidaemon
 echo "Type=oneshot" >> $deskpidaemon
 echo "Restart=always" >> $deskpidaemon
 echo "RemainAfterExit=true" >> $deskpidaemon
 echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
-echo "" >> $daemonfanservic 
+echo " " >> $daemonfanservic 
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
