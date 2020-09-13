@@ -6,9 +6,15 @@ deskpidaemon=/lib/systemd/system/$daemonname.service
 stopfandaemon=/lib/systemd/system-shutdown/$daemonname-shutdown.service
 installationfolder=/home/pi/deskpi
 
+# install wiringPi library.
+sudo apt -y purge wiringpi && hash -r 
+cd /tmp
+wget https://project-downloads.drogon.net/wiringpi-latest.deb
+sudo dpkg -i wiringpi-latest.deb
+
 # Create service file on system.
 if [ -e $deskpidaemon ]; then
-	sudo rm $deskpidaemon
+	sudo rm -f $deskpidaemon
 fi
 
 sudo touch $stopfandaemon 
@@ -27,10 +33,11 @@ echo "Description=DeskPi Fan Service" >> $deskpidaemon
 echo "After=multi-user.target" >> $deskpidaemon
 echo "" >> $daemonfanservic 
 echo "[Service]" >> $deskpidaemon
-echo "Type=simple" >> $deskpidaemon
+echo "Type=forking" >> $deskpidaemon
 echo "Restart=always" >> $deskpidaemon
 echo "RemainAfterExit=true" >> $deskpidaemon
 echo "ExecStart=/usr/bin/pwmFanControl &" >> $deskpidaemon
+echo "" >> $daemonfanservic 
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
