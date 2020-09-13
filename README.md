@@ -7,7 +7,13 @@ cd ~
 git clone https://github.com/DeskPi-Team/deskpi.git
 cd ~/deskpi/
 chmod +x install.sh
-./install.sh
+sudo ./install.sh
+```
+## How to Uninstall deskpi
+```bash
+cd ~/deskpi/
+chmod +x uninstall.sh
+sudo ./uninstall.sh
 ```
 ## LOGO
 ![LOGO](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpilogo1.png)
