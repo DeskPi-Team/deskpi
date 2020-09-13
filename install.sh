@@ -9,9 +9,9 @@ installationfolder=/home/pi/deskpi
 # install wiringPi library.
 sudo apt -y purge wiringpi && hash -r 
 cd /tmp
+rm -f /tmp/wiringpi-latest.deb 2>/dev/null
 wget https://project-downloads.drogon.net/wiringpi-latest.deb
 sudo dpkg -i wiringpi-latest.deb
-rm /tmp/wiringpi-latest.deb
 
 # Create service file on system.
 if [ -e $deskpidaemon ]; then
