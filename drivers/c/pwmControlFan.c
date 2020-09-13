@@ -18,14 +18,16 @@
  * sudo dpkg -i wiringpi-latest.deb
  */
 
-const int PWM_pin = 1;  /* GPIO 1 as per WiringPi, GPIO 18 as per BCM */
+/* const int PWM_pin = 1;   GPIO 1 as per WiringPi, GPIO 18 as per BCM */
 int n = 0;
 
 int main(void){
 	int intensity; 
+	/* testing code
 	if (wiringPiSetup() == -1)
 		exit(1);
-	pinMode(PWM_pin, PWM_OUTPUT);  /* Set PWM pin as output */
+	pinMode(PWM_pin, PWM_OUTPUT);  
+	*/
 
 	while(1){
  		int serial_port = open("/dev/ttyUSB0", O_RDWR);
@@ -91,19 +93,17 @@ int main(void){
 	fclose(fp);
 
 /* check the temperature level and send pwm to serial port */
-	if ( num < 45000){
- 		printf("buff is less than 45000\n");
+	if ( num < 50000){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
 		data[3] = '_';
 		data[4] = '0';
-		data[5] = '2';
-		data[6] = '5';
+		data[5] = '0';
+		data[6] = '0';
 		data[7] = '\0';
 	}
-	else if ( num > 50000 & num < 60000){
- 		printf("buff is greater than 50000 and less than 60000\n");
+	else if ( num > 55000 & num < 60000){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
@@ -113,19 +113,7 @@ int main(void){
 		data[6] = '0';
 		data[7] = '\0';
  	}
-	else if ( num > 60000 & num < 70000){
- 		printf("buff is greater than 60000 less then 70000\n");
-		data[0] = 'p';
-		data[1] = 'w';
-		data[2] = 'm';
-		data[3] = '_';
-		data[4] = '0';
-		data[5] = '7';
-		data[6] = '5';
-		data[7] = '\0';
-	}
-	else if ( num > 70000){
- 		printf("buff is greater than 70000\n");
+	else if ( num > 60000 ){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
