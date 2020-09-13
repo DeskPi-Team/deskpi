@@ -33,10 +33,10 @@ echo "Description=DeskPi Fan Service" >> $deskpidaemon
 echo "After=multi-user.target" >> $deskpidaemon
 echo "" >> $daemonfanservic 
 echo "[Service]" >> $deskpidaemon
-echo "Type=forking" >> $deskpidaemon
+echo "Type=oneshot" >> $deskpidaemon
 echo "Restart=always" >> $deskpidaemon
 echo "RemainAfterExit=true" >> $deskpidaemon
-echo "ExecStart=/usr/bin/pwmFanControl &" >> $deskpidaemon
+echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
 echo "" >> $daemonfanservic 
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
@@ -57,7 +57,7 @@ echo "Requires=poweroff.target" >> $stopfandaemon
 echo "" >> $stopfandaemon
 echo "[Service]" >> $stopfandaemon
 echo "Type=oneshot" $stopfandaemon
-echo "ExecStart=/usr/bin/fanStop &" >> $stopfandaemon
+echo "ExecStart=sudo /usr/bin/fanStop &" >> $stopfandaemon
 echo "RemainAfterExit=yes" >> $stopfandaemon
 echo "" >> $stopfandaemon
 echo "[Install]" >> $stopfandaemon
