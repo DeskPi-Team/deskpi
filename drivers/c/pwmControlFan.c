@@ -137,8 +137,8 @@ int main(void){
 	}
 	write(serial_port, data, sizeof(data));
 	close(serial_port);
-	printf("Send data %s\n",  data);
-	printf("Send Temperature %d times\n", n+=1);
+	// printf("Send data %s\n",  data);
+	// printf("Send Temperature %d times\n", n+=1);
 	sleep(1);
 	}
 	return 0;
