@@ -6,14 +6,14 @@ stopfandaemon=/lib/systemd/system-shutdown/$daemonname-shutdown.service
 
 echo "Uninstalling deskpi fan scipt..."
 sleep 1
-sudo systemctl disable $daemonname.service
-sudo systemctl stop $daemonname.service
-sudo systemctl disable $stopfandaemon.service
-sudo systemctl stop $stopfandaemon.service
-sudo rm -f  $stopfandaemon
-sudo rm -f  $stopfandaemon
-sudo rm -f /usr/bin/fanStop
-sudo rm -f /usr/bin/pwmFanControl
+sudo systemctl disable $daemonname.service 2>/dev/null  
+sudo systemctl stop $daemonname.service  2>/dev/null
+sudo systemctl disable $stopfandaemon.service 2>/dev/null
+sudo systemctl stop $stopfandaemon.service 2>/dev/null
+sudo rm -f  $deskpidaemon  2&>/dev/null || echo "remove $deskdaemon"
+sudo rm -f  $stopfandaemon 2&>/dev/null || echo "remove $stopfandaemon"
+sudo rm -f /usr/bin/fanStop 2&>/dev/null || echo "remove /usr/bin/fanStop file"
+sudo rm -f /usr/bin/pwmFanControl 2>/dev/null || echo "remove /usr/bin/pwmFanControl file"
 echo "Uninstalling deskpi is finished, have a nice day" 
 
 

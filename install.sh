@@ -1,16 +1,17 @@
 #!/bin/bash
 # 
+. /lib/lsb/init-functions
+
 daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
-stopfandaemon=/lib/systemd/system-shutdown/$daemonname-shutdown.service
+stopfandaemon=/lib/systemd/system-shutdown/fanStop.service
 installationfolder=/home/pi/deskpi
 
 # install wiringPi library.
+log_action_msg "DeskPi Fan control script installation Start..." 
 sudo apt -y purge wiringpi && hash -r 
-cd /tmp
-rm -f /tmp/wiringpi-latest.deb 2>/dev/null
-wget https://project-downloads.drogon.net/wiringpi-latest.deb
+cd $installationfolder
 sudo dpkg -i wiringpi-latest.deb
 
 # Create service file on system.
@@ -22,7 +23,7 @@ sudo touch $stopfandaemon
 sudo chmod 666 $stopfandaemon
 
 # install PWM fan control daemon.
-cd $installationfolder/drivers/c/ && make
+cd $installationfolder/drivers/c/ 
 sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
 sudo chmod 755 /usr/bin/pwmFanControl
@@ -32,13 +33,10 @@ sudo chmod 755 /usr/bin/fanStop
 echo "[Unit]" >> $deskpidaemon
 echo "Description=DeskPi Fan Service" >> $deskpidaemon
 echo "After=multi-user.target" >> $deskpidaemon
-echo " " >> $daemonfanservic 
 echo "[Service]" >> $deskpidaemon
 echo "Type=oneshot" >> $deskpidaemon
-echo "Restart=always" >> $deskpidaemon
 echo "RemainAfterExit=true" >> $deskpidaemon
 echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
-echo " " >> $daemonfanservic 
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
@@ -55,19 +53,17 @@ echo "DefaultDependencies=no" >> $stopfandaemon
 echo "Conflicts=reboot.target" >> $stopfandaemon
 echo "Before=poweroff.target halt.target shutdown.target" >> $stopfandaemon
 echo "Requires=poweroff.target" >> $stopfandaemon
-echo "" >> $stopfandaemon
 echo "[Service]" >> $stopfandaemon
-echo "Type=oneshot" $stopfandaemon
+echo "Type=oneshot" >> $stopfandaemon
 echo "ExecStart=sudo /usr/bin/fanStop &" >> $stopfandaemon
 echo "RemainAfterExit=yes" >> $stopfandaemon
-echo "" >> $stopfandaemon
 echo "[Install]" >> $stopfandaemon
 echo "WantedBy=shutdown.target" >> $stopfandaemon
 
 # Make it works 
 sudo chmod 644 $stopfandaemon
-sudo systemctl enable $stopfandaemon
-sudo systemctl start  $stopfandaemon
+sudo systemctl enable fanStop.service
+sudo systemctl start  fanStop.service
 
 # Finished 
-echo -e "DeskPi Fan control script installation finished." 
+log_action_msg "DeskPi Fan control script installation finished." 

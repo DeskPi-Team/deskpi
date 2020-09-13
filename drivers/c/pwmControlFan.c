@@ -18,27 +18,26 @@
  * sudo dpkg -i wiringpi-latest.deb
  */
 
-/* const int PWM_pin = 1;   GPIO 1 as per WiringPi, GPIO 18 as per BCM */
+const int PWM_pin = 1;   /* GPIO 1 as per WiringPi, GPIO 18 as per BCM */
 int n = 0;
 
 int main(void){
-	int intensity; 
-	/* testing code
 	if (wiringPiSetup() == -1)
 		exit(1);
 	pinMode(PWM_pin, PWM_OUTPUT);  
-	*/
 
 	while(1){
  		int serial_port = open("/dev/ttyUSB0", O_RDWR);
 		if (serial_port < 0){
-			printf("Error $i from open: %s\n", errno, strerror(errno));
- 			}
+			printf("Can not open /dev/ttyUSB0 serial port ErrorCode: %s\n", strerror(errno));
+			printf("Please check the /boot/config.txt file and add dtoverlay=dwc2, dr_mode=host and reboot RPi \n");
+
+ 		}
 
 	struct termios tty;
 
 	if(tcgetattr(serial_port, &tty) !=0){
-		printf("Error $i from open: %s\n", errno, strerror(errno));
+		printf("Please check serial port over OTG\n");
  	}
 
 	tty.c_cflag &= ~PARENB; 
@@ -75,21 +74,19 @@ int main(void){
 	cfsetospeed(&tty, B9600);
 
 	if (tcsetattr(serial_port, TCSANOW, &tty) !=0){
-		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+		printf("---Serial Port Can not detected---\n");
 	}
 
 /* Read Temperature from system file  */
 	FILE *fp;
 	char buff[255];
-	char ch;
 	int num;
 	char data[8];
 
 	fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
-	if (fgets(buff, 255, (FILE*)fp)!= NULL){
+	if (fgets(buff, 255, (FILE*)fp) != NULL){
     	num = atoi(buff);
 	}
-	// fgets(buff, 255, (FILE*)fp);
 	fclose(fp);
 
 /* check the temperature level and send pwm to serial port */
@@ -103,7 +100,7 @@ int main(void){
 		data[6] = '0';
 		data[7] = '\0';
 	}
-	else if ( num > 55000 & num < 60000){
+	else if ((num > 55000) & (num < 60000)){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
@@ -125,8 +122,6 @@ int main(void){
 	}
 	write(serial_port, data, sizeof(data));
 	close(serial_port);
-	// printf("Send data %s\n",  data);
-	// printf("Send Temperature %d times\n", n+=1);
 	sleep(1);
 	}
 	return 0;
