@@ -59,8 +59,7 @@ sudo chmod 644 $deskpidaemon
 sudo chmod 644 $stopfandaemon
 sudo systemctl enable $daemonname.service
 sudo systemctl enable fanStop.service
-sudo systemctl start $daemonname.service
-sudo systemctl start  fanStop.service
+sudo systemctl start $daemonname.service &
 
 # Finished 
-log_action_msg "DeskPi Fan control script installation finished." 
+log_success_msg "DeskPi Fan control service installation is finished." 
