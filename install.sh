@@ -40,13 +40,7 @@ echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
-# Make it works
-sudo chmod 644 $deskpidaemon
-sudo systemctl enable $daemonname.service
-sudo systemctl start $daemonname.service
-
 # send signal to MCU before system shuting down.
-
 echo "[Unit]" >> $stopfandaemon
 echo "Description=Send shutdown signal to MCU at shutdown only" >> $stopfandaemon
 echo "DefaultDependencies=no" >> $stopfandaemon
@@ -60,9 +54,12 @@ echo "RemainAfterExit=yes" >> $stopfandaemon
 echo "[Install]" >> $stopfandaemon
 echo "WantedBy=shutdown.target" >> $stopfandaemon
 
-# Make it works 
+# Make it works
+sudo chmod 644 $deskpidaemon
 sudo chmod 644 $stopfandaemon
+sudo systemctl enable $daemonname.service
 sudo systemctl enable fanStop.service
+sudo systemctl start $daemonname.service
 sudo systemctl start  fanStop.service
 
 # Finished 
