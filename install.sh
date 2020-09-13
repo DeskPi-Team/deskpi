@@ -1,7 +1,7 @@
 #!/bin/bash
 # 
 daemonname="deskpid"
-tempmonscript=/usr/bin/pmwfancontrol
+tempmonscript=/usr/bin/pmwFanControl
 daemonfanservice=/lib/systemd/system/$daemonname.service
 fanshutdownservice=/lib/systemd/system-shutdown/$daemonname-shutdown.service
 installationfolder=/home/pi/deskpi
@@ -11,8 +11,7 @@ sudo touch $fanshutdownservice
 sudo chmod 666 $fanshutdownservice
 
 # install PWM fan control daemon.
-cd $installationfolder/drivers/c/
-make
+cd $installationfolder/drivers/c/ && make
 sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
 sudo chmod 666 /usr/bin/pwmFanControl
@@ -37,7 +36,7 @@ sudo systemctl start $daemonname.service
 
 # send signal to MCU before system shuting down.
 
-echo "[Unit] >> $fanshutdownservice
+echo "[Unit]" >> $fanshutdownservice
 echo "Description=Send shutdown signal to MCU at shutdown only" >> $fanshutdownservice
 echo "DefaultDependencies=no" >> $fanshutdownservice
 echo "Conflicts=reboot.target" >> $fanshutdownservice
@@ -58,4 +57,4 @@ sudo systemctl enable $fanshutdownservice
 sudo systemctl start  $fanshutdownservice
 
 # Finished 
-echo -e "\[32;40mDeskPi Fan control script installation finished.\[0m" 
+echo -e "DeskPi Fan control script installation finished." 
