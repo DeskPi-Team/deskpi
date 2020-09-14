@@ -49,8 +49,8 @@ echo "Before=poweroff.target halt.target shutdown.target" >> $stopfandaemon
 echo "Requires=poweroff.target" >> $stopfandaemon
 echo "[Service]" >> $stopfandaemon
 echo "Type=oneshot" >> $stopfandaemon
-echo "ExecStart=sudo /usr/bin/fanStop &" >> $stopfandaemon
-echo "RemainAfterExit=no" >> $stopfandaemon
+echo "ExecStart=sudo /usr/bin/fanStop" >> $stopfandaemon
+echo "RemainAfterExit=yes" >> $stopfandaemon
 echo "[Install]" >> $stopfandaemon
 echo "WantedBy=shutdown.target" >> $stopfandaemon
 
