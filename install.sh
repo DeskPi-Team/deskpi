@@ -19,8 +19,8 @@ if [ -e $deskpidaemon ]; then
 	sudo rm -f $deskpidaemon
 fi
 
-sudo touch $stopfandaemon 
-sudo chmod 666 $stopfandaemon
+# sudo touch $stopfandaemon 
+# sudo chmod 666 $stopfandaemon
 
 # install PWM fan control daemon.
 cd $installationfolder/drivers/c/ 
@@ -30,7 +30,7 @@ sudo chmod 755 /usr/bin/pwmFanControl
 sudo chmod 755 /usr/bin/fanStop
 
 # Build Fan Daemon
-echo "[Unit]" >> $deskpidaemon
+echo "[Unit]" > $deskpidaemon
 echo "Description=DeskPi Fan Service" >> $deskpidaemon
 echo "After=multi-user.target" >> $deskpidaemon
 echo "[Service]" >> $deskpidaemon
@@ -41,7 +41,7 @@ echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
 # send signal to MCU before system shuting down.
-echo "[Unit]" >> $stopfandaemon
+echo "[Unit]" > $stopfandaemon
 echo "Description=Send shutdown signal to MCU at shutdown only" >> $stopfandaemon
 echo "DefaultDependencies=no" >> $stopfandaemon
 echo "Conflicts=reboot.target" >> $stopfandaemon
@@ -55,10 +55,11 @@ echo "[Install]" >> $stopfandaemon
 echo "WantedBy=shutdown.target" >> $stopfandaemon
 
 # Make it works
-sudo chmod 644 $deskpidaemon
-sudo chmod 644 $stopfandaemon
+sudo chown root:root $deskpidaemon
+sudo chown root:root $stopfandaemon
+sudo chmod 755 $deskpidaemon
+sudo chmod 755 $stopfandaemon
 sudo systemctl enable $daemonname.service
-sudo systemctl enable fanStop.service
 sudo systemctl start $daemonname.service &
 
 # Finished 
