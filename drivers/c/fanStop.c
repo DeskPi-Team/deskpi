@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <wiringPi.h>
 
 int main(void){
 	while(1){
