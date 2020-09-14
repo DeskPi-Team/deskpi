@@ -73,7 +73,7 @@ int main(void){
 	fclose(fp);
 
 /* check the temperature level and send pwm to serial port */
-	if (num < 50000){
+	if (num < 49000){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
