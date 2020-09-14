@@ -7,25 +7,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
-#include <wiringPi.h>
-/* wiringPi.h requires wiringPi library, you can install it as following
- * commands 
- * sudo apt-get update 
- * sudo apt -y purge wiringpi
- * hash -r 
- * cd /tmp
- * wget https://project-downloads.drogon.net/wiringpi-latest.deb
- * sudo dpkg -i wiringpi-latest.deb
- */
-
-const int PWM_pin = 1;   /* GPIO 1 as per WiringPi, GPIO 18 as per BCM */
-int n = 0;
 
 int main(void){
-	if (wiringPiSetup() == -1)
-		exit(1);
-	pinMode(PWM_pin, PWM_OUTPUT);  
-
 	while(1){
  		int serial_port = open("/dev/ttyUSB0", O_RDWR);
 		if (serial_port < 0){
@@ -99,6 +82,7 @@ int main(void){
 		data[5] = '0';
 		data[6] = '0';
 		data[7] = '\0';
+		write(serial_port, data, sizeof(data));
 	}
 	else if ((num > 55000) & (num < 60000)){
 		data[0] = 'p';
@@ -109,6 +93,7 @@ int main(void){
 		data[5] = '5';
 		data[6] = '0';
 		data[7] = '\0';
+		write(serial_port, data, sizeof(data));
  	}
 	else if ( num > 60000 ){
 		data[0] = 'p';
@@ -119,8 +104,8 @@ int main(void){
 		data[5] = '0';
 		data[6] = '0';
 		data[7] = '\0';
+		write(serial_port, data, sizeof(data));
 	}
-	write(serial_port, data, sizeof(data));
 	close(serial_port);
 	sleep(1);
 	}
