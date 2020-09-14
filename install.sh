@@ -5,7 +5,7 @@
 daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
-stopfandaemon=/lib/systemd/system-shutdown/fanStop.service
+stopfandaemon=/lib/systemd/system-shutdown/fanStop.sh
 installationfolder=/home/pi/deskpi
 
 # install wiringPi library.
@@ -41,20 +41,17 @@ echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
 # send signal to MCU before system shuting down.
-echo "[Unit]" > $stopfandaemon
-echo "Description=Send shutdown signal to MCU at shutdown only" >> $stopfandaemon
-echo "DefaultDependencies=no" >> $stopfandaemon
-echo "Conflicts=reboot.target" >> $stopfandaemon
-echo "Before=poweroff.target halt.target shutdown.target" >> $stopfandaemon
-echo "Requires=poweroff.target" >> $stopfandaemon
-echo "[Service]" >> $stopfandaemon
-echo "Type=oneshot" >> $stopfandaemon
-echo "ExecStart=sudo /usr/bin/fanStop" >> $stopfandaemon
-echo "RemainAfterExit=yes" >> $stopfandaemon
-echo "[Install]" >> $stopfandaemon
-echo "WantedBy=shutdown.target" >> $stopfandaemon
+echo "#!/bin/bash" > $stopfandaemon
+echo ". /lib/lsb/init-functions" >> $stopfandaemon
+echo "log_begin_msg \"Initializing shutdown sequences...\"" >> $stopfandaemon
+echo "log_success_msg \"Shutting down deskpi.service\"" >> $stopfandaemon
+echo "sudo sync" >> $stopfandaemon
+echo "sudo /usr/bin/fanStop" >> $stopfandaemon
+echo "sudo init 0" >> $stopfandaemon
 
-# Make it works
+sudo chown root:root $stopfandaemon
+sudo chmod 755 $stopfandaemon
+
 sudo chown root:root $deskpidaemon
 sudo chown root:root $stopfandaemon
 sudo chmod 755 $deskpidaemon

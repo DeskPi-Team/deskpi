@@ -4,7 +4,7 @@
 
 daemonname="deskpi"
 deskpidaemon=/lib/systemd/system/$daemonname.service
-stopfandaemon=/lib/systemd/system-shutdown/fanStop.service
+stopfandaemon=/lib/systemd/system-shutdown/fanStop.sh
 
 log_action_msg "Uninstalling deskpi fan scipt..."
 sleep 1
