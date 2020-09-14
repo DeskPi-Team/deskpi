@@ -7,19 +7,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
-#include <wiringPi.h>
 
 int main(void){
 	while(1){
  		int serial_port = open("/dev/ttyUSB0", O_RDWR);
 		if (serial_port < 0){
-			printf("Error $i from open: %s\n", errno, strerror(errno));
+			printf("Can not access /dev/ttyUSB0, please check it out.\n");
  			}
 
 	struct termios tty;
 
 	if(tcgetattr(serial_port, &tty) !=0){
-		printf("Error $i from open: %s\n", errno, strerror(errno));
+		printf("serial port can not be accessed\n");
  	}
 
 	tty.c_cflag &= ~PARENB; 
@@ -56,7 +55,7 @@ int main(void){
 	cfsetospeed(&tty, B9600);
 
 	if (tcsetattr(serial_port, TCSANOW, &tty) !=0){
-		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+		printf("Please check out /boot/config.txt file\n");
 	}
 
 	char data[10];

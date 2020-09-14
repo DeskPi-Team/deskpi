@@ -10,9 +10,9 @@ installationfolder=/home/pi/deskpi
 
 # install wiringPi library.
 log_action_msg "DeskPi Fan control script installation Start..." 
-sudo apt -y purge wiringpi && hash -r 
-cd $installationfolder
-sudo dpkg -i wiringpi-latest.deb
+# sudo apt -y purge wiringpi && hash -r 
+# cd $installationfolder
+# sudo dpkg -i wiringpi-latest.deb
 
 # Create service file on system.
 if [ -e $deskpidaemon ]; then
@@ -50,7 +50,7 @@ echo "Requires=poweroff.target" >> $stopfandaemon
 echo "[Service]" >> $stopfandaemon
 echo "Type=oneshot" >> $stopfandaemon
 echo "ExecStart=sudo /usr/bin/fanStop &" >> $stopfandaemon
-echo "RemainAfterExit=yes" >> $stopfandaemon
+echo "RemainAfterExit=no" >> $stopfandaemon
 echo "[Install]" >> $stopfandaemon
 echo "WantedBy=shutdown.target" >> $stopfandaemon
 
