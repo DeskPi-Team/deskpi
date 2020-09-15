@@ -67,3 +67,8 @@ sudo systemctl enable $daemonname-safeshut.service
 
 # Finished 
 log_success_msg "DeskPi PWM Fan Control and Safeshut Service installed successfully." 
+# greetings and require rebooting system to take effect.
+log_action_msg "System will reboot in 5 seconds to take effect." 
+sudo sync
+sleep 5 
+sudo reboot
