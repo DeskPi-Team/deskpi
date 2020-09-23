@@ -6,28 +6,28 @@ daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
 safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
-installationfolder=/home/pi/deskpi
+installationfolder=/home/`who|awk '{print $1}'`/deskpi
 
 # install wiringPi library.
 log_action_msg "DeskPi Fan control script installation Start." 
 
 # Create service file on system.
 if [ -e $deskpidaemon ]; then
-	sudo rm -f $deskpidaemon
+	sudo sh -c "rm -f $deskpidaemon"
 fi
 
 # adding dtoverlay to enable dwc2 on host mode.
-sudo sed -i '/dtoverlay=dwc2*/d' /boot/config.txt 
-sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt 
+sudo sh -c "sed -i '/dtoverlay=dwc2*/d' /boot/config.txt"
+sudo sh -c "sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt" 
 sudo sh -c "echo dwc2 > /etc/modules-load.d/raspberry.conf" 
 
 # install PWM fan control daemon.
 log_action_msg "DeskPi main control service loaded."
 cd $installationfolder/drivers/c/ 
-sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
-sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
-sudo chmod 755 /usr/bin/pwmFanControl
-sudo chmod 755 /usr/bin/fanStop
+sudo sh -c "cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl"
+sudo sh -c "cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop"
+sudo sh -c "chmod 755 /usr/bin/pwmFanControl"
+sudo sh -c "chmod 755 /usr/bin/fanStop"
 
 # Build Fan Daemon
 echo "[Unit]" > $deskpidaemon
