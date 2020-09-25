@@ -1,0 +1,64 @@
+#!/bin/bash	
+# This is a fan speed control utility tool for user to customize fan speed.
+# Priciple: send speed argument to the MCU 
+# Technical Part
+# There are four arguments:
+# pwm_025 means sending 25% PWM signal to MCU. The fan will run at 25% speed level. 
+# pwm_050 means sending 50% PWM signal to MCU. The fan will run at 50% speed level.
+# pwm_075 means sending 75% PWM signal to MCU. The fan will run at 75% speed level.
+# pwm_100 means sending 100% PWM signal to MCU.The fan will run at 100% speed level. 
+# 
+. /lib/lsb/init-functions
+# This is the serial port that connect to deskPi mainboard and it will
+# communicate with Raspberry Pi and get the signal for fan speed adjusting.
+serial_port='/dev/ttyUSB0'
+
+# Stop deskpi.service so that user can define the speed level.
+sudo systemctl stop deskpi.service
+
+# Greetings and information for user.
+log_action_msg "Welcome to Use DeskPi-Team's Product"
+log_action_msg "Please select speed level that you want: "
+log_action_msg "1 - set fan speed level to 25%"
+log_action_msg "2 - set fan speed level to 50%"
+log_action_msg "3 - set fan speed level to 75%"
+log_action_msg "4 - set fan speed level to 100%"
+log_action_msg "5 - Turn off Fan"
+log_action_msg "6 - Cancel manual control and enable automatical fan control"
+log_action_msg "Just input the number and press enter."
+read -p "Your choice:" levelNumber
+case $levelNumber in
+	1) 
+	   log_action_msg "You've select 25% speed level"
+	   sudo sh -c "echo pwm_025 > $serial_port"
+	   log_action_msg "Fan speed level has been change to 25%"
+	   ;;
+	2) 
+	   log_action_msg "You've select 50% speed level"
+	   sudo sh -c "echo pwm_050 > $serial_port"
+	   log_action_msg "Fan speed level has been change to 50%"
+	   ;;
+	3) 
+	   log_action_msg "You've select 75% speed level"
+	   sudo sh -c "echo pwm_075 > $serial_port"
+	   log_action_msg "Fan speed level has been change to 75%"
+	   ;;
+	4) 
+	   log_action_msg "You've select 100% speed level"
+	   sudo sh -c "echo pwm_100 > $serial_port"
+	   log_action_msg "Fan speed level has been change to 100%"
+	   ;;
+	5) 
+	   log_action_msg "Turn off fan"
+	   sudo sh -c "echo pwm_000 > $serial_port"
+	   log_action_msg "Fan speed level has been turned off."
+	   ;;
+	6) 
+	   log_action_msg "Cancel manual control and enable automatical fan control"
+	   sudo systemctl restart deskpi.service &
+	   ;;
+	*) 
+	   log_action_msg "You type the wrong selection, please try again!"
+	   . /usr/bin/deskpi-config
+	   ;;
+esac

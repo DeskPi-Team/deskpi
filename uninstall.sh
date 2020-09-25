@@ -21,4 +21,5 @@ sudo rm -f  $deskpidaemon  2&>/dev/null
 sudo rm -f  $safeshutdaemon 2&>/dev/null 
 sudo rm -f /usr/bin/fanStop 2&>/dev/null
 sudo rm -f /usr/bin/pwmFanControl 2&>/dev/null 
+sudo rm -f /usr/bin/deskpi-config 2&>/dev/null 
 log_success_msg "Uninstall DeskPi Driver Successfully." 

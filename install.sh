@@ -27,6 +27,8 @@ sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
 sudo chmod 755 /usr/bin/pwmFanControl
 sudo chmod 755 /usr/bin/fanStop
+sudo cp -rf $installationfolder/deskpi-config /usr/bin/deskpi-config
+sudo chmod 755 /usr/bin/deskpi-config
 
 # Build Fan Daemon
 echo "[Unit]" > $deskpidaemon
