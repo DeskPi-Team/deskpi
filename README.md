@@ -62,7 +62,12 @@ sudo ./uninstall-kali.sh
 ### For Windows IoT OS
 * Unsupported due to lacking of driver.
 * Testing version: Midnight falcon
-
+## How to control fan speed mannualy.
+* Open a terminal and typing following command:
+```bash
+deskpi-config
+```
+You can follow the instructions to setup fan speed level by typing numbers.
 ## LOGO
 ![LOGO](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpilogo1.png)
 
