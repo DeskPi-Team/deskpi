@@ -67,7 +67,10 @@ sudo ./uninstall-kali.sh
 ```bash
 deskpi-config
 ```
-You can follow the instructions to setup fan speed level by typing numbers.
+You can follow the instructions to setup fan speed level by typing numbers as
+following example:
+![Example](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpi-config-example.jpg)
+
 ## LOGO
 ![LOGO](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpilogo1.png)
 
