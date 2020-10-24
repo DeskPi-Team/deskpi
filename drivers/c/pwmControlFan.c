@@ -73,7 +73,7 @@ int main(void){
 	fclose(fp);
 
 /* check the temperature level and send pwm to serial port */
-	if (num < 49000){
+	if (num < 40000){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
@@ -84,7 +84,18 @@ int main(void){
 		data[7] = '\0';
 		write(serial_port, data, sizeof(data));
 	}
-	else if ((num > 55000) & (num < 60000)){
+	else if ((num > 40000) & (num <= 50000)){
+		data[0] = 'p';
+		data[1] = 'w';
+		data[2] = 'm';
+		data[3] = '_';
+		data[4] = '0';
+		data[5] = '2';
+		data[6] = '5';
+		data[7] = '\0';
+		write(serial_port, data, sizeof(data));
+	}
+	else if ((num > 50000) & (num < 65000)){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
@@ -95,7 +106,18 @@ int main(void){
 		data[7] = '\0';
 		write(serial_port, data, sizeof(data));
  	}
-	else if ( num > 60000 ){
+	else if ((num > 65000) & (num < 75000)){
+		data[0] = 'p';
+		data[1] = 'w';
+		data[2] = 'm';
+		data[3] = '_';
+		data[4] = '0';
+		data[5] = '7';
+		data[6] = '5';
+		data[7] = '\0';
+		write(serial_port, data, sizeof(data));
+ 	}
+	else if ( num > 75000 ){
 		data[0] = 'p';
 		data[1] = 'w';
 		data[2] = 'm';
