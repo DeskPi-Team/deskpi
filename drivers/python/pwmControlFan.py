@@ -13,7 +13,9 @@ try:
             cpu_temp = subprocess.getoutput('vcgencmd measure_temp|awk -F\'=\' \'{print $2\'}')
             cpu_temp = int(cpu_temp.split('.')[0])
 
-            if cpu_temp > 35 and cpu_temp < 50:
+            if cpu_temp < 40:
+                ser.write(b'pwm_000')
+            elif cpu_temp > 40 and cpu_temp < 50:
                 ser.write(b'pwm_025')
             elif cpu_temp > 50 and cpu_temp < 65:
                 ser.write(b'pwm_050')
@@ -25,5 +27,4 @@ try:
 except KeyboardInterrupt:
     ser.write(b'pwm_000')
     ser.close()
-
-
+    
