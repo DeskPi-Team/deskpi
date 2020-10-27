@@ -30,6 +30,8 @@ sudo sh -c "chmod 755 /usr/bin/pwmFanControl"
 sudo sh -c "chmod 755 /usr/bin/fanStop"
 sudo cp -rf $installationfolder/deskpi-config /usr/bin/deskpi-config
 sudo sh -c "chmod 755 /usr/bin/deskpi-config"
+sudo cp -rf $installationfolder/Deskpi-uninstall /usr/bin/Deskpi-uninstall
+sudo sh -c "chmod 755 /usr/bin/Deskpi-uninstall"
 
 # Build Fan Daemon
 echo "[Unit]" > $deskpidaemon
