@@ -10,12 +10,6 @@ cd ~/deskpi/
 chmod +x install.sh
 sudo ./install.sh
 ```
-## How to Uninstall deskpi
-```bash
-cd ~/deskpi/
-chmod +x uninstall.sh
-sudo ./uninstall.sh
-```
 ### For Ubuntu-mate OS
 ```bash
 cd ~
@@ -24,12 +18,6 @@ cd ~/deskpi/
 chmod +x install-ubuntu-mate.sh
 sudo ./install-ubuntu-mate.sh
 ```
-## How to Uninstall deskpi
-```bash
-cd ~/deskpi/
-chmod +x uninstall-ubuntu-mate.sh
-sudo ./uninstall-ubuntu-mate.sh
-```
 ### For Manjaro OS
 ```bash
 cd ~
@@ -37,12 +25,6 @@ git clone https://github.com/DeskPi-Team/deskpi.git
 cd ~/deskpi/
 chmod +x install-manjaro.sh
 sudo ./install-manjaro.sh
-```
-## How to Uninstall deskpi
-```bash
-cd ~/deskpi/
-chmod +x uninstall-manjaro.sh
-sudo ./uninstall-manjaro.sh
 ```
 ### For Kali-linux-arm OS.
 * Image Download URL: https://images.kali.org/arm-images/kali-linux-2020.3a-rpi3-nexmon.img.xz <br>
@@ -55,10 +37,9 @@ sudo ./install-kali.sh
 ```
 ## How to Uninstall deskpi
 ```bash
-cd ~/deskpi/
-chmod +x uninstall-kali.sh
-sudo ./uninstall-kali.sh
+DeskPi-uninstall 
 ```
+And then select the number against to your OS Type.
 ### For Windows IoT OS
 * Unsupported due to lacking of driver.
 * Testing version: Midnight falcon
