@@ -6,7 +6,7 @@ sudo systemctl stop deskpi.service
 sudo systemctl disable deskpi.service
 
 # Define file locations
-installation_dir="/home/`who|awk '{print $1}'`/deskpi/"
+installation_dir="/home/pi/deskpi"
 # Greetings and information for user.
 log_action_msg "Welcome to Use DeskPi-Team's Product"
 log_action_msg "Please select what distribution you have: "
@@ -15,7 +15,6 @@ log_action_msg "2 - Manjaro"
 log_action_msg "3 - Ubuntu Mate"
 log_action_msg "4 - Kali"
 log_action_msg "5 - Cancel Uninstallation Process"
-you defined" 
 log_action_msg "Just input the number and press enter."
 read -p "Your choice:" os_type
 case $os_type in
@@ -40,10 +39,10 @@ case $os_type in
 	   sudo sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	5) 
-	   log_action_msg "Uninstallation Canceled."
+	   log_action_msg "Uninstallation Canceled"
 	   ;;
 	*) 
-	   log_action_msg "You type the wrong selection, please try again!"
+	   log_action_msg "Error selection please try again"
 	   . /usr/bin/Deskpi-uninstall
 	   ;;
 esac
