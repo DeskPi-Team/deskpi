@@ -59,12 +59,14 @@ idea, once the file has been created, the program will according to the
 configuration file to setup your fan.
 * Number 7 is to enable automatic fan control by default paramaters. 
 ** Default arguments:  
+```
 TEMP   : Fan_SPEED_LEVEL
 <40C   : 0%  
 40~50C : 25%  
 50~65C : 50%  
 65~75C : 75%  
 >75C   : 100%  
+```
 ![Example](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpi-config-snap.jpg)
 
 ## LOGO
