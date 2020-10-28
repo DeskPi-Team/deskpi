@@ -6,7 +6,7 @@ daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
 safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
-installationfolder=/home/`who|awk '{print $1}'`/deskpi
+installationfolder=/home/$USER/deskpi
 
 # install wiringPi library.
 log_action_msg "DeskPi Fan control script installation Start." 

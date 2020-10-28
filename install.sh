@@ -6,7 +6,7 @@ daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
 safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
-installationfolder=/home/`who|awk '{print $1}'`/deskpi
+installationfolder=/home/pi/deskpi
 
 # install wiringPi library.
 log_action_msg "DeskPi Fan control script installation Start." 
@@ -23,12 +23,12 @@ sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt
 # install PWM fan control daemon.
 log_action_msg "DeskPi main control service loaded."
 cd $installationfolder/drivers/c/ 
-sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
-sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
+sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/
+sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/
 sudo chmod 755 /usr/bin/pwmFanControl
 sudo chmod 755 /usr/bin/fanStop
-sudo cp -rf $installationfolder/deskpi-config /usr/bin/deskpi-config
-sudo cp -rf $installationfolder/Deskpi-uninstall /usr/bin/Deskpi-uninstall
+sudo cp -rf $installationfolder/deskpi-config /usr/bin/
+sudo cp -rf $installationfolder/Deskpi-uninstall /usr/bin/
 sudo chmod 755 /usr/bin/deskpi-config
 sudo chmod 755 /usr/bin/Deskpi-uninstall
 
