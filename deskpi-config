@@ -27,12 +27,12 @@ function set_config() {
 	following requires you to control the fan's operating status according to
 	the temperature and speed defined by yourself, and you need to input 4
 	different temperature thresholds (for example: 42, 50, 60, 70) , And 4 PWM
-	values of different speeds (for example 25, 50, 75, 100, this is the default
-	value)" 
+	values of different speeds parameters(for example 25, 50, 75, 100, this is the default
+	value),you can define the speed level during 0-100." 
 	for i in `seq 1 4`;
 	do 
-	read -p  "Temp_$i:" temp 
-    read -p  "Speed level_$i:" fan_speed_level
+	read -p  "Temperature_threshold_$i:" temp 
+    read -p  "Fan_Speed level_$i:" fan_speed_level
 	sudo sh -c "echo $temp" >> /etc/deskpi.conf  
 	sudo sh -c "echo $fan_speed_level" >> /etc/deskpi.conf  
 	done 
