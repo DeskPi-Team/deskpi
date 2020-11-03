@@ -2,8 +2,8 @@
 # 
 . /lib/lsb/init-functions
 cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
+sh -c "git clone https://github.com/DeskPi-Team/deskpi.git"
+cd $HOME/deskpi/
 sudo chmod +x install.sh
 daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
@@ -20,9 +20,12 @@ if [ -e $deskpidaemon ]; then
 fi
 
 # adding dtoverlay to enable dwc2 on host mode.
+log_action_msg "Enable dwc2 on Host Mode"
 sudo sed -i '/dtoverlay=dwc2*/d' /boot/config.txt 
 sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt 
-
+if [ $? -eq 0 ]; then
+   log_action_msg "dwc2 has been setting up successfully"
+fi
 # install PWM fan control daemon.
 log_action_msg "DeskPi main control service loaded."
 cd $installationfolder/drivers/c/ 
