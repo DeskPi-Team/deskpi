@@ -1,7 +1,10 @@
 #!/bin/bash
 # 
 . /lib/lsb/init-functions
-
+cd ~
+git clone https://github.com/DeskPi-Team/deskpi.git
+cd ~/deskpi/
+sudo chmod +x install.sh
 daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
