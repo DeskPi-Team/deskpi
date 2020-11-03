@@ -31,7 +31,7 @@ function set_config() {
 	value),you can define the speed level during 0-100." 
 	for i in `seq 1 4`;
 	do 
-	echo -n "Current CPU Temperature: `vcgencmd measure_temp`"
+	echo -e "\e[32;40mCurrent CPU Temperature:\e[0m \e[31;40m`vcgencmd measure_temp`\e[0m\n"
 	read -p  "Temperature_threshold_$i:" temp 
         read -p  "Fan_Speed level_$i:" fan_speed_level
 	sudo sh -c "echo $temp" >> /etc/deskpi.conf  
