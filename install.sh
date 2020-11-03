@@ -4,12 +4,11 @@
 cd ~
 sh -c "git clone https://github.com/DeskPi-Team/deskpi.git"
 cd $HOME/deskpi/
-sudo chmod +x install.sh
 daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
 safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
-installationfolder=/home/pi/deskpi
+installationfolder=$HOME/$daemonname
 
 # install wiringPi library.
 log_action_msg "DeskPi Fan control script installation Start." 
