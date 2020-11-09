@@ -58,6 +58,7 @@ echo "[Service]" >> $safeshutdaemon
 echo "Type=oneshot" >> $safeshutdaemon
 echo "ExecStart=/usr/bin/sudo /usr/bin/fanStop" >> $safeshutdaemon
 echo "RemainAfterExit=yes" >> $safeshutdaemon
+echo "TimeoutSec=1" >> $safeshutdaemon
 echo "[Install]" >> $safeshutdaemon
 echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 
