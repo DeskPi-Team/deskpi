@@ -1,10 +1,9 @@
 # FAQ 
-## About USB booting 
-Without UASP, a drive is mounted as a Mass Storage Device using Bulk Only Transport (or BOT), a protocol that was designed for transferring files way back in the USB 'Full speed' days, when the fastest speed you could get was a whopping 12 Mbps!
-With USB 3.0, the BOT protocol cripples throughput. USB 3.0 has 5 Gbps of bandwidth, which is 400x more than USB 1.1. The old BOT protocol would transfer data in large chunks, and each chunk of data had to be delivered in order, without regard for buffering or multiple bits of data being able to transfer in parallel.
-So a new protocol was created, called 'USB Attached SCSI Protocol', or 'UASP'.
-I won't get too technical here, but the SCSI protocol has been around for a very long time—long enough that it was part of a joke in this 1994 Dilbert comic. It has features like allowing parallel bits of data to be copied and out of order data transfer so the drive can use buffering and caching mechanisms for better performance.
-Around the time USB 3.0 was introduced, most USB storage devices and adapters for hard drives started adopting the standard. And some computers with only USB 2.0 ports could have their firmware updated to use UASP for newer drives, so some USB 2.0 connections got a speed boost.
+## About USB booting, what is UASP?
+* Without UASP, a drive is mounted as a Mass Storage Device using Bulk Only Transport (or BOT), a protocol that was designed for transferring files way back in the USB 'Full speed' days, when the fastest speed you could get was a whopping 12 Mbps!
+* With USB 3.0, the BOT protocol cripples throughput. USB 3.0 has 5 Gbps of bandwidth, which is 400x more than USB 1.1. The old BOT protocol would transfer data in large chunks, and each chunk of data had to be delivered in order, without regard for buffering or multiple bits of data being able to transfer in parallel.
+* So a new protocol was created, called 'USB Attached SCSI Protocol', or 'UASP'
+ 
 ## How to check if my drive is support UASP?
 * If you have a USB drive and don't want to take it apart and look up the specs of the controller chip, the only reliable way to tell if it's being mounted with UASP support or not is to plug it into your Pi, then run the command lsusb -t:
 ```bash
