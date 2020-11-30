@@ -31,9 +31,11 @@ This command lists all the USB devices in a tree, and for each of the hard drive
 * Make sure your OS is on the support OS list.
 * Make sure your Raspberry Pi can access internet.
 * git clone https://github.com/DeskPi-Team/deskpi.git
-* cd ~/deskpi/
-* chmod +x install.sh
-* sudo ./install.sh
-
+* Typing following command in a terminal:
+```bash
+cd ~/deskpi/
+chmod +x install.sh
+sudo ./install.sh
+```
 ## Where is the list of supported OS ?
 * Please just visit here: https://github.com/DeskPi-Team/deskpi
