@@ -94,7 +94,7 @@ sudo reboot
 ```
 After reboot, re-open Terminal again
 ```bash
-sudo -E rpi-eeprom-config –edit
+sudo -E rpi-eeprom-config --edit
 ```
 •	do not change anything, it is unnecessary
 •	press Ctrl-X to save, answer Y to overwrite file.
