@@ -84,11 +84,10 @@ Upon reboot, open Terminal again:
 ```bash
 sudo raspi-config
 ```
-• go to Advanced Options 
-•	Select Boot Order, select #1 USB Boot
-•	Return to Advanced Options,
-•	Select Boot Loader Version, choose Latest Version
-•	Save & exit
+* go to Advanced Options 
+* Select Boot Order, select #1 `USB Boot`, Return to Advanced Options,
+* Select Boot Loader Version, choose `Latest Version`
+* Save & exit
 ### Reboot again (to restart with new settings)
 ```bash
 sudo reboot 
