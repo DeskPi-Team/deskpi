@@ -105,7 +105,25 @@ Now you are ready to install Raspberry-OS onto your USB Boot Device.
 You can use the Raspberry Imager from `www.raspberrypi.org` website. 
 Depending on device the new SD Card Copier can transfer the SD-Card image to the USB Device (ensure you select generate a new UUID). 
 Once your USB drive is imaged & ready to boot, shutdown your Deskpi-Pro, remove the SD-Card and power-up to boot from the USB Boot drive, once running & configured you can install your additional software and proceed as usual. 
-
+## How to Use IR function onboard.
+1. You need to enable `gpio-ir` function by modify `/boot/config.txt` file.
+uncomment this line if not exsit please add it.
+```bash
+dtoverlay=gpio-ir,gpio_pin=17 
+```
+2. Install `lirc` package:
+```bash
+sudo apt-get install lirc
+```
+3. Modify configuration file on location: /etc/lirc/lirc_options.conf and make sure it has following parameters:
+```bash
+driver          = default
+device          = /dev/lirc0
+```
+4. Reboot your Raspberry Pi and test it with following command:
+```bash
+mode2 -d /dev/lirc1
+```
 ## LOGO
 ![LOGO](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpilogo1.png)
 
