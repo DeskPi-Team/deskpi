@@ -21,6 +21,9 @@ This command lists all the USB devices in a tree, and for each of the hard drive
 ## Why dose this pre-installed Raspbian OS image's setting is China? 
 * This pre-installed Raspbian OS image is based on Raspbian OS buster(ver:2020-08-20), and when we are initializing this OS and try to connect to internet and download deskpi driver from github.com, we must set the wi-fi country before we enable the wifi adapters. and this product may sale all around the world, we can not detect which country or nation that our costomer is in, so the default set is Shanghai China. and you can just change the wi-fi country by using command in terminal : `sudo raspi-config` and select Localisation Options to configure language and regional settings.
 
+## The front panel USB is unavailable.
+* Because there is no configuration: /boot/config.txt file, you need to add in this configuration file: dtoverlay=dwc2,dr_mode=host, and restart the Raspberry Pi. and if you installed deskPi driver, it will add to config.txt file automatically. 
+
 ## Can I change computer name in pre-installed Raspbian OS?
 * Yes, of course, Typing `sudo raspi-config` to select System Options (item 1) and navigate to S4 Hostname to configure your hostname or just typing `sudo hostnamectl set-hostname YOURHOSTNAMEHERE` to set hostname in commandline.
 
