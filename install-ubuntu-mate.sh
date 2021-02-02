@@ -8,7 +8,7 @@ deskpidaemon=/lib/systemd/system/$daemonname.service
 safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
 installationfolder=/home/$USER/deskpi
 
-# install wiringPi library.
+# install DeskPi stuff.
 log_action_msg "DeskPi Fan control script installation Start." 
 
 # Create service file on system.
@@ -75,4 +75,5 @@ log_success_msg "DeskPi PWM Fan Control and Safeshut Service installed successfu
 log_action_msg "System will reboot in 5 seconds to take effect." 
 sudo sync
 sleep 5 
-sudo reboot
+# sudo reboot
+echo "Reboot system for changes to take effect"
