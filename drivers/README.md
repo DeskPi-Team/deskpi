@@ -56,7 +56,7 @@ pip3 install pyserial
 cd ~
 git clone https://github.com/DeskPi-Team/deskpi.git
 cd ~/deskpi/drivers/python/
-sudo python3 pwmcontrolfan.py
+sudo python3 pwmControlFan.py
 ```
 ### Job Done.
 
