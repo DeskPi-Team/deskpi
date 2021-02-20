@@ -64,10 +64,10 @@ echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 
 log_action_msg "DeskPi Service configuration finished." 
 sudo chown root:root $safeshutdaemon
-sudo chmod 755 $safeshutdaemon
+sudo chmod 644 $safeshutdaemon
 
 sudo chown root:root $deskpidaemon
-sudo chmod 755 $deskpidaemon
+sudo chmod 644 $deskpidaemon
 
 log_action_msg "DeskPi Service Load module." 
 sudo systemctl daemon-reload
