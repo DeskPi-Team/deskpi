@@ -6,7 +6,8 @@ daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
 safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
-installationfolder=/home/$USER/deskpi
+# Thanks for muckypaws' help, solve the location problem.
+installationfolder=/home/$SUDO_USER/deskpi
 
 # install DeskPi stuff.
 log_action_msg "DeskPi Fan control script installation Start." 
