@@ -128,4 +128,3 @@ mode2 -d /dev/lirc1
 ```
 ## LOGO
 ![LOGO](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpilogo1.png)
-
