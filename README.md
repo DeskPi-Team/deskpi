@@ -35,6 +35,16 @@ cd ~/deskpi/
 chmod +x install-kali.sh
 sudo ./install-kali.sh
 ```
+### For Twister OS v2.0.2
+`OS image: TwisterOSv2-0-2.img`
+* Image Download URL:https://twisteros.com/twisteros.html <br>
+```bash
+cd ~
+git clone https://github.com/DeskPi-Team/deskpi.git
+cd ~/deskpi/
+chmod +x install.sh
+sudo ./install.sh
+```
 ## How to Uninstall deskpi
 ```bash
 DeskPi-uninstall 
