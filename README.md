@@ -45,6 +45,15 @@ cd ~/deskpi/
 chmod +x install.sh
 sudo ./install.sh
 ```
+### For 64 bit Raspberry Pi OS (aarm64)
+* Image Download URL: http://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2021-05-28/
+```bash
+cd ~
+git clone https://github.com/DeskPi-Team/deskpi.git
+cd ~/deskpi/
+chmod +x install.sh
+sudo ./install.sh
+```
 ## How to Uninstall deskpi
 ```bash
 DeskPi-uninstall 
