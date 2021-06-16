@@ -54,6 +54,19 @@ cd ~/deskpi/
 chmod +x install.sh
 sudo ./install.sh
 ```
+### For DietPi OS 64bit 
+* Make sure your OS can access internet and please install `git` first.
+* Execute this command in terminal:
+```
+apt-get update && apt-get -y install git 
+```
+* Image Download URL:  https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Buster.7z
+```bash
+cd ~
+git clone https://github.com/DeskPi-Team/deskpi.git
+cd ~/deskpi/
+./install.sh
+```
 ## How to Uninstall deskpi
 ```bash
 DeskPi-uninstall 
