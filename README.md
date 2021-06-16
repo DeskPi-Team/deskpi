@@ -67,6 +67,42 @@ git clone https://github.com/DeskPi-Team/deskpi.git
 cd ~/deskpi/
 ./install.sh
 ```
+### For Volumio OS Version: 2021-04-24-Pi
+* Image Download URL: https://updates.volumio.org/pi/volumio/2.882/volumio-2.882-2021-04-24-pi.img.zip
+* Getting Start:　https://volumio.github.io/docs/User_Manual/Quick_Start_Guide.html
+* Make sure your Volumio can access internet. 
+* There are some steps need to do.
+```
+sudo nano /etc/network/interface
+```
+make sure following parameters in file `/etc/network/interface` 
+```
+auto wlan0 
+allow-hotplug wlan0 
+iface wlan0 inet dhcp
+wpa-ssid "YOUR WIFI SSID"
+wpa-psk "YOUR WIFI PASSWORD"
+```
+and enable the internet access by typing this command in terminal:
+```
+volumio internet on
+```
+and then reboot your DeskPi.
+```
+sudo reboot
+```
+* Download DeskPi driver from github:
+```
+git clone https://github.com/DeskPi-Team/deskpi.git
+cd deskpi/
+sudo ./install.sh
+```
+* TEST it after rebooting.
+```
+deskpi-config
+```
+Select `4` and press `Enter`, you would see the fan is spinning and the front USB port are now available.
+
 ## How to Uninstall deskpi
 ```bash
 DeskPi-uninstall 
@@ -100,6 +136,13 @@ TEMP   : Fan_SPEED_LEVEL
 >75C   : 100%  
 ```
 ![Example](https://raw.githubusercontent.com/DeskPi-Team/deskpi/master/imgs/deskpi-config-snap.jpg)
+** If you want to change it, just typing :
+```
+deskpi-config
+```
+Select `6` and then input `45` and enter, and then input `50` means setup the fan speed level to `50%` when CPU temp is above 45 degree it has 4 level to setup.
+NOTE: 50% Speed level means you have already send `PWM50` to `/dev/ttyUSB0` port, and this port will available when you add `dtoverlay=dwc2,dr_mode=host` to `/boot/config.txt` file and `reboot` your DeskPi. 
+
 ## How to boot from USB SSD/HDD?
 After initial Raspberry Pi Configuration and once you have Internet Connectivity established, Install the DeskPi Pro Utilities from `https://github.com/DeskPi-Team/deskpi.git`
 Open a Terminal / Console and run the following commands:  
