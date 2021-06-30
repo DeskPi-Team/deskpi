@@ -1,6 +1,5 @@
-pwmFanControl:  pwmControlFan.c 
-	gcc -o pwmFanControl pwmControlFan.c 
-	gcc -o fanStop fanStop.c
+safecutoffpower:  safecutoffpower.c 
+	gcc -o safecutoffpower safecutoffpower.c
 clean:
-	rm -rf pwmFanControl fanStop
+	rm -rf safecutoffpower
 

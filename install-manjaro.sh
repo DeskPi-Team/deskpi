@@ -1,79 +1,60 @@
 #!/bin/bash
 # 
-. /lib/lsb/init-functions
+echo "DeskPi Driver Installing..."
+if [ -d /tmp/deskpi ]; then
+	sudo rm -rf /tmp/deskpi 2&>/dev/null
+fi
+echo "Download the latest DeskPi Driver from GitHub..."
+cd /tmp && git clone https://github.com/DeskPi-Team/deskpi.git 
 
-daemonname="deskpi"
-tempmonscript=/usr/bin/pmwFanControl
-deskpidaemon=/lib/systemd/system/$daemonname.service
-safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
-installationfolder=/home/$USER/deskpi
+echo "DeskPi Driver Installation Start."
+deskpiv1=/lib/systemd/system/systemd-deskpi-safecutoffpower.service
+driverfolder=/tmp/deskpi
 
-# install wiringPi library.
-log_action_msg "DeskPi Fan control script installation Start." 
-
-# Create service file on system.
-if [ -e $deskpidaemon ]; then
-	sudo sh -c "rm -f $deskpidaemon"
+# delete deskpi-safecutoffpower.service file.
+if [ -e $deskpi ]; then
+	sudo sh -c "rm -f $deskpi"
 fi
 
 # adding dtoverlay to enable dwc2 on host mode.
-sudo sh -c "sed -i '/dtoverlay=dwc2*/d' /boot/config.txt"
-sudo sh -c "sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt" 
+echo "Configure /boot/config.txt file and enable front USB2.0"
+sudo sed -i '/dtoverlay=dwc2*/d' /boot/config.txt
+sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt 
 sudo sh -c "echo dwc2 > /etc/modules-load.d/raspberry.conf" 
 
-# install PWM fan control daemon.
-log_action_msg "DeskPi main control service loaded."
-cd $installationfolder/drivers/c/ 
-sudo sh -c "cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl"
-sudo sh -c "cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop"
-sudo sh -c "chmod 755 /usr/bin/pwmFanControl"
-sudo sh -c "chmod 755 /usr/bin/fanStop"
-sudo cp -rf $installationfolder/deskpi-config /usr/bin/deskpi-config
-sudo sh -c "chmod 755 /usr/bin/deskpi-config"
-sudo cp -rf $installationfolder/Deskpi-uninstall /usr/bin/Deskpi-uninstall
-sudo sh -c "chmod 755 /usr/bin/Deskpi-uninstall"
+sudo cp -rf $driverfolder/drivers/c/safecutoffpower64 /usr/bin/safecutoffpower64
+sudo cp -rf $driverfolder/drivers/python/safecutoffpower.py /usr/bin/safecutoffpower.py
+sudo chmod 644 /usr/bin/safecutoffpower64
+sudo chmod 644 /usr/bin/safecutoffpower.py
 
-# Build Fan Daemon
-echo "[Unit]" > $deskpidaemon
-echo "Description=DeskPi PWM Control Fan Service" >> $deskpidaemon
-echo "After=multi-user.target" >> $deskpidaemon
-echo "[Service]" >> $deskpidaemon
-echo "Type=oneshot" >> $deskpidaemon
-echo "RemainAfterExit=true" >> $deskpidaemon
-echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
-echo "[Install]" >> $deskpidaemon
-echo "WantedBy=multi-user.target" >> $deskpidaemon
+# send cut off power signal to MCU before system shuting down.
+sudo echo "[Unit]" > $deskpi
+sudo echo "Description=DeskPi Safe Cut-off Power Service" >> $deskpi
+sudo echo "Conflicts=reboot.target" >> $deskpi
+sudo echo "DefaultDependencies=no" >> $deskpi
+sudo echo "" >> $deskpi
+sudo echo "[Service]" >> $deskpi
+sudo echo "Type=oneshot" >> $deskpi
+sudo echo "ExecStart=/usr/bin/sudo /usr/bin/safecutoffpower64" >> $deskpi
+sudo echo "# ExecStart=/usr/bin/sudo python3 /usr/bin/safecutoffpower.py" >> $deskpi
+sudo echo "RemainAfterExit=yes" >> $deskpi
+sudo echo "TimeoutStartSec=15" >> $deskpi
+sudo echo "" >> $deskpi
+sudo echo "[Install]" >> $deskpi
+sudo echo "WantedBy=halt.target shutdown.target poweroff.target final.target" >> $deskpi
 
-# send signal to MCU before system shuting down.
-echo "[Unit]" > $safeshutdaemon
-echo "Description=DeskPi Safeshutdown Service" >> $safeshutdaemon
-echo "Conflicts=reboot.target" >> $safeshutdaemon
-echo "Before=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
-echo "DefaultDependencies=no" >> $safeshutdaemon
-echo "[Service]" >> $safeshutdaemon
-echo "Type=oneshot" >> $safeshutdaemon
-echo "ExecStart=/usr/bin/sudo /usr/bin/fanStop" >> $safeshutdaemon
-echo "RemainAfterExit=yes" >> $safeshutdaemon
-echo "[Install]" >> $safeshutdaemon
-echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
+sudo chown root:root $deskpi
+sudo chmod 644 $deskpi
 
-log_action_msg "DeskPi Service configuration finished." 
-sudo chown root:root $safeshutdaemon
-sudo chmod 755 $safeshutdaemon
-
-sudo chown root:root $deskpidaemon
-sudo chmod 755 $deskpidaemon
-
-log_action_msg "DeskPi Service Load module." 
 sudo systemctl daemon-reload
-sudo systemctl enable $daemonname.service
-sudo systemctl start $daemonname.service &
-sudo systemctl enable $daemonname-safeshut.service
+sudo systemctl enable systemd-deskpiv1-safecutoffpower.service
+# install rpi.gpio for fan control
+yes |sudo pacman -S python-pip
+sudo pip3 install pyserial
+# sudo pacman -S python python-pip base-devel
+# env CFLAGS="-fcommon" pip install rpi.gpio
 
-# Finished 
-log_success_msg "DeskPi PWM Fan Control and Safeshut Service installed successfully." 
-# greetings and require rebooting system to take effect.
-log_action_msg "System will reboot in 5 seconds to take effect." 
-sudo sync
-sleep 5 
-sudo reboot
+sync
+sudo rm -rf /tmp/deskpi
+echo "DeskPi Driver installation successful, system will reboot in 5 seconds to take effect!"
+sleep 5 && sudo reboot
