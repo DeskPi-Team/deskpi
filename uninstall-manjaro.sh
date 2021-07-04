@@ -1,13 +1,22 @@
 #!/bin/bash
-# uninstall deskpi  script 
 
-deskpi=/lib/systemd/system/systemd-deskpi-safecutoffpower.service
-echo "DeskPi Driver Uninstalling..."
-echo "Configure /boot/config.txt"
-sudo sed -i '/dtoverlay=dwc2,dr_mode=host/d' /boot/config.txt
-echo "Stop and disable DeskPi  services"
-sudo rm -f $deskpi 2&>/dev/null 
-sudo rm -f /usr/bin/safecutoffpower* 2&>/dev/null
-sudo rm -rf /etc/modules-load.d/raspberry.conf 2&>/dev/null
-echo "Uninstall DeskPi Driver Successfully." 
+echo "================ DeskPi driver uninstallation ================"
 
+echo ""
+
+echo "---------------- DeskPi service configuration ----------------"
+sudo systemctl stop deskpiFanStop
+sudo systemctl stop deskpiFanControl
+sudo systemctl disable deskpiFanStop
+sudo systemctl disable deskpiFanControl
+sudo rm -f  /lib/systemd/system/deskpiFanStop.service
+sudo rm -f  /lib/systemd/system/deskpiFanControl.service
+sudo rm -f /usr/bin/deskpiFanStop
+sudo rm -f /usr/bin/deskpiFanControl
+echo "Successfully removed and disabled DeskPi Fan Control and Safeshut Services"
+echo "------------ DeskPi service configuration finished ------------"
+
+echo ""
+
+sync
+echo "=========== Uninstalled DeskPi Driver successfully ============"
