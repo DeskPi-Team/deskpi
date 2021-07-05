@@ -1,3 +1,3 @@
-SWITCH OVER TO `LIBREELECINSTALLER` BRANCH!
+# SWITCH OVER TO `LIBREELECINSTALLER` BRANCH!
 
-This Branch is **NOT** modified and **WILL NOT WORK** for Libreelec.
+## This Branch is **NOT** modified and **WILL NOT WORK** for Libreelec.
