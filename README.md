@@ -10,6 +10,14 @@ cd ~/deskpi/
 chmod +x install.sh
 sudo ./install.sh
 ```
+### For Ubuntu 64bit OS
+```bash
+cd ~
+git clone https://github.com/DeskPi-Team/deskpi.git
+cd ~/deskpi/
+chmod +x install-ubuntu-64.sh
+sudo ./install-ubuntu-64.sh
+```
 ### For Ubuntu-mate OS
 ```bash
 cd ~
