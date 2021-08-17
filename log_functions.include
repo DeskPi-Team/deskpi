@@ -33,11 +33,4 @@ log_action_msg () {
     log_action_msg_pre "$@"
     echo "$@." || true
     log_action_msg_post "$@"
-}#!/bin/bash
-log_action_msg_pre () { :; }
-log_action_msg_post () { :; }
-log_action_msg () {
-    log_action_msg_pre "$@"
-    echo "$@." || true
-    log_action_msg_post "$@"
 }
