@@ -20,5 +20,7 @@ rm -f "$safeshutdaemon" 2&>/dev/null
 rm -f /usr/bin/safecutoffpower* 2&>/dev/null
 rm -f /usr/bin/pwmControlFan* 2&>/dev/null
 rm -rf /etc/modules-load.d/raspberry.conf 2&>/dev/null
+# remove Uninstall script itself
+rm -f /usr/local/bin/Deskpi-uninstall
 echo "Uninstall DeskPi Driver Successfully." 
 
