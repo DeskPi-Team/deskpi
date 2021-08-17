@@ -1,5 +1,9 @@
 #!/bin/bash
 # 
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root or with sudo"
+  exit
+fi
 echo "DeskPi Driver Installing..."
 if [ -d /tmp/deskpi ]; then
 	rm -rf /tmp/deskpi 2&>/dev/null
