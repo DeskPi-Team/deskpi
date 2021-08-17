@@ -79,7 +79,7 @@ echo "Before=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 echo "DefaultDependencies=no" >> $safeshutdaemon
 echo "" >> $safeshutdaemon
 echo "[Service]" >> $safeshutdaemon
-echo "Environment='PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/opt/vc/bin'"
+echo 'Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/opt/vc/bin"'
 echo "#Type=oneshot" >> $safeshutdaemon
 echo "Type=simple" >> $safeshutdaemon
 echo "ExecStart=/usr/bin/python3 /usr/bin/pwmControlFan.py" >> $safeshutdaemon
@@ -106,4 +106,4 @@ pip3 install pyserial
 sync
 rm -rf /tmp/deskpi
 echo "DeskPi Driver installation successful, system will reboot in 5 seconds to take effect!"
-sleep 5 && reboot
+#sleep 5 && reboot
