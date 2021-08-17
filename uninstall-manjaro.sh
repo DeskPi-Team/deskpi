@@ -11,7 +11,7 @@ safeshutdaemon=/lib/systemd/system/deskpi-safeshut.service
 echo "DeskPi Driver Uninstalling..."
 echo "Configure /boot/config.txt"
 sed -i '/dtoverlay=dwc2,dr_mode=host/d' /boot/config.txt
-echo "Stop and disable DeskPi  services"
+echo "Stop and disable DeskPi services"
 systemctl stop deskpi.service
 systemctl stop deskpi-safeshut.service
 systemctl daemon-reload
