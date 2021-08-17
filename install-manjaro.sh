@@ -8,7 +8,7 @@ echo "Download the latest DeskPi Driver from GitHub..."
 cd /tmp && git clone https://github.com/DeskPi-Team/deskpi.git 
 
 echo "DeskPi Driver Installation Start."
-deskpiv1=/lib/systemd/system/systemd-deskpi-safecutoffpower.service
+deskpi=/lib/systemd/system/deskpi.service
 driverfolder=/tmp/deskpi
 
 # delete deskpi-safecutoffpower.service file.
@@ -34,10 +34,11 @@ echo "Conflicts=reboot.target" >> $deskpi
 echo "DefaultDependencies=no" >> $deskpi
 echo "" >> $deskpi
 echo "[Service]" >> $deskpi
-echo "Type=oneshot" >> $deskpi
-echo "ExecStart=/usr/bin//usr/bin/safecutoffpower64" >> $deskpi
-echo "# ExecStart=/usr/bin/python3 /usr/bin/safecutoffpower.py" >> $deskpi
-echo "RemainAfterExit=yes" >> $deskpi
+echo "#Type=oneshot" >> $deskpi
+echo "Type=Simple" >> $deskpi
+echo "#ExecStart=/usr/bin//usr/bin/safecutoffpower64" >> $deskpi
+echo "ExecStart=/usr/bin/python3 /usr/bin/safecutoffpower.py" >> $deskpi
+echo "RemainAfterExit=true" >> $deskpi
 echo "TimeoutStartSec=15" >> $deskpi
 echo "" >> $deskpi
 echo "[Install]" >> $deskpi
@@ -47,9 +48,9 @@ chown root:root $deskpi
 chmod 644 $deskpi
 
 systemctl daemon-reload
-systemctl enable systemd-deskpiv1-safecutoffpower.service
+systemctl enable deskpi.service
 # install rpi.gpio for fan control
-yes |pacman -S python-pip
+pacman -S --noconfirm python-pip
 pip3 install pyserial
 # pacman -S python python-pip base-devel
 # env CFLAGS="-fcommon" pip install rpi.gpio
