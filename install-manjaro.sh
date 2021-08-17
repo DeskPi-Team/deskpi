@@ -32,6 +32,7 @@ cd /tmp && git clone https://github.com/DeskPi-Team/deskpi.git
 
 echo "DeskPi Driver Installation Start."
 deskpi=/lib/systemd/system/deskpi.service
+safeshutdaemon=/lib/systemd/system/deskpi-safeshut.service
 driverfolder=/tmp/deskpi
 
 # delete deskpi-safecutoffpower.service file.
@@ -70,8 +71,32 @@ echo "WantedBy=halt.target shutdown.target poweroff.target final.target" >> $des
 chown root:root $deskpi
 chmod 644 $deskpi
 
+# send signal to MCU before system shuting down.
+echo "[Unit]" > $safeshutdaemon
+echo "Description=DeskPi Safeshutdown Service" >> $safeshutdaemon
+echo "Conflicts=reboot.target" >> $safeshutdaemon
+echo "Before=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
+echo "DefaultDependencies=no" >> $safeshutdaemon
+echo "" >> $safeshutdaemon
+echo "[Service]" >> $safeshutdaemon
+echo "Environment='PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/bin/site_perl:/usr/bin/vendor_perl:/usr/bin/core_perl:/opt/vc/bin'"
+echo "#Type=oneshot" >> $safeshutdaemon
+echo "Type=simple" >> $safeshutdaemon
+echo "ExecStart=/usr/bin/python3 /usr/bin/pwmControlFan.py" >> $safeshutdaemon
+echo "RemainAfterExit=true" >> $safeshutdaemon
+echo "TimeoutStartSec=15" >> $safeshutdaemon
+echo "" >> $safeshutdaemon
+echo "[Install]" >> $safeshutdaemon
+echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
+
+chown root:root $safeshutdaemon
+chmod 644 $safeshutdaemon
+
+
 systemctl daemon-reload
 systemctl enable deskpi.service
+systemctl enable deskpi-safeshut.service
+
 # install rpi.gpio for fan control
 pacman -S --noconfirm python-pip
 pip3 install pyserial
