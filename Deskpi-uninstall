@@ -48,6 +48,6 @@ case $os_type in
 	   ;;
 	*) 
 	   log_action_msg "Error selection please try again"
-	   . /usr/bin/Deskpi-uninstall
+	   . /usr/local/bin/Deskpi-uninstall
 	   ;;
 esac
