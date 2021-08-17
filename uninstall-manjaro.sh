@@ -14,6 +14,7 @@ sed -i '/dtoverlay=dwc2,dr_mode=host/d' /boot/config.txt
 echo "Stop and disable DeskPi  services"
 systemctl stop deskpi.service
 systemctl stop deskpi-safeshut.service
+systemctl daemon-reload
 rm -f "$deskpi" 2&>/dev/null
 rm -f "$safeshutdaemon" 2&>/dev/null
 rm -f /usr/bin/safecutoffpower* 2&>/dev/null
