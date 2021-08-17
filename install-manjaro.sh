@@ -4,6 +4,21 @@ if [ "$EUID" -ne 0 ]
   then echo "Please run as root or with sudo"
   exit
 fi
+
+# copy lib for functions used by deskpi-config
+# to /usr/local/lib
+if [ -f '/usr/local/lib/deskpi-local.lib' ] ; then
+ echo "local functions lib already present"
+else
+ echo "copying functions library to /usr/local/lib/deskpi-local.lib"
+ cp ./log_functions.include '/usr/local/lib/deskpi-log-functions'
+fi
+# copy deskpi-config to usr local bin
+echo "copying deskpi-config to /usr/local/bin"
+cp ./deskpi-config /usr/local/bin/deskpi-config
+# make deskpi-config executable
+chmod +x /usr/local/bin/deskpi-config
+
 echo "DeskPi Driver Installing..."
 if [ -d /tmp/deskpi ]; then
 	rm -rf /tmp/deskpi 2&>/dev/null
