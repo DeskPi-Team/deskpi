@@ -58,7 +58,7 @@ echo "DefaultDependencies=no" >> $deskpi
 echo "" >> $deskpi
 echo "[Service]" >> $deskpi
 echo "#Type=oneshot" >> $deskpi
-echo "Type=Simple" >> $deskpi
+echo "Type=simple" >> $deskpi
 echo "#ExecStart=/usr/bin//usr/bin/safecutoffpower64" >> $deskpi
 echo "ExecStart=/usr/bin/python3 /usr/bin/safecutoffpower.py" >> $deskpi
 echo "RemainAfterExit=true" >> $deskpi
