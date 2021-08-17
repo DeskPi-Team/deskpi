@@ -4,7 +4,8 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 # Uninstall script 
-. /lib/lsb/init-functions
+. /usr/local/lib/deskpi-log-functions
+
 # Stop deskpi.service.
 systemctl stop deskpi.service
 systemctl disable deskpi.service
