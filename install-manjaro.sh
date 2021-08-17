@@ -7,7 +7,7 @@ fi
 
 # copy lib for functions used by deskpi-config
 # to /usr/local/lib
-if [ -f '/usr/local/lib/deskpi-local.lib' ] ; then
+if [ -f '/usr/local/lib/deskpi-log-functions' ] ; then
  echo "local functions lib already present"
 else
  echo "copying functions library to /usr/local/lib/deskpi-local.lib"
