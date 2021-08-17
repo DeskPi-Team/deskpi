@@ -24,5 +24,7 @@ rm -rf /etc/modules-load.d/raspberry.conf 2&>/dev/null
 rm -f /usr/local/bin/Deskpi-uninstall
 # remove deskpi-config
 rm -f /usr/local/bin/deskpi-config
+# remove log functions
+rm -f '/usr/local/lib/deskpi-log-functions'
 echo "Uninstall DeskPi Driver Successfully." 
 
