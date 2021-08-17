@@ -45,10 +45,10 @@ sed -i '/dtoverlay=dwc2*/d' /boot/config.txt
 sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt 
 sh -c "echo dwc2 > /etc/modules-load.d/raspberry.conf" 
 
-cp -rf $driverfolder/drivers/c/safecutoffpower64 /usr/bin/safecutoffpower64
 cp -rf $driverfolder/drivers/python/safecutoffpower.py /usr/bin/safecutoffpower.py
-chmod 644 /usr/bin/safecutoffpower64
+cp -rf $driverfolder/drivers/python/pwmControlFan.py /usr/bin/pwmControlFan.py
 chmod 644 /usr/bin/safecutoffpower.py
+chmod 644 /usr/bin/pwmControlFan.py
 
 # send cut off power signal to MCU before system shuting down.
 echo "[Unit]" > $deskpi
