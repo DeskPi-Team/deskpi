@@ -18,6 +18,10 @@ echo "copying deskpi-config to /usr/local/bin"
 cp ./deskpi-config /usr/local/bin/deskpi-config
 # make deskpi-config executable
 chmod +x /usr/local/bin/deskpi-config
+# copy uninstalls cript to local bin
+echo "copying Deskpi-uninstall to /usr/local/bin"
+cp ./Deskpi-uninstall /usr/local/bin/Deskpi-uninstall
+chmod +x /usr/local/bin/Deskpi-uninstall
 
 echo "DeskPi Driver Installing..."
 if [ -d /tmp/deskpi ]; then
