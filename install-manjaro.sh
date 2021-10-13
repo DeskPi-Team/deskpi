@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# Thanks for Mixcraftio's help, you saved me.
+# orginal url: https://github.com/Mixcraftio/deskpi
 # Variables
 deskPiDir=/home/$USER
 fanstop=/tmp/deskpi/deskpiFanStop.service
