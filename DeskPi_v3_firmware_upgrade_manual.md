@@ -101,7 +101,7 @@ echo $((4194240*512))
 result : 2147450880
 Then write that value into the drive's `discard_max_bytes` setting. 
 ```bash
-echo 2147450880 > /sys/block/sda/queque/discard_max_bytes
+echo 2147450880 > /sys/block/sda/queue/discard_max_bytes
 ```
 Now, to confirm TRIM is enabled, run:
 ```bash
@@ -143,7 +143,7 @@ sudo systemctl enable fstrim.timer
 ## How to diagnostic Disk speed:
 1. Install agnostic software
 ```bash
-sudo apt-get -y install agnostic
+sudo apt-get -y install agnostics
 ```
 ![Alt text](./imgs/1620796793679.png)
 2. Execute following command  in terminal on desktop
