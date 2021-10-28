@@ -8,7 +8,7 @@
 # pwm_075 means sending 75% PWM signal to MCU. The fan will run at 75% speed level.
 # pwm_100 means sending 100% PWM signal to MCU.The fan will run at 100% speed level. 
 # 
-. /usr/local/lib/deskpi-log-functions
+. /lib/lsb/init-functions
 # This is the serial port that connect to deskPi mainboard and it will
 # communicate with Raspberry Pi and get the signal for fan speed adjusting.
 serial_port='/dev/ttyUSB0'
