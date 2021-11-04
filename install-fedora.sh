@@ -40,11 +40,16 @@ cd $installationfolder/drivers/c/
 sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/
 sudo chmod 755 /usr/bin/pwmFanControl
+sudo chcon -u system_u -t bin_t /usr/bin/pwmFanControl
 sudo chmod 755 /usr/bin/fanStop
+sudo chcon -u system_u -t bin_t /usr/bin/fanStop
 sudo cp -rf $installationfolder/deskpi-config /usr/bin/
 sudo cp -rf $installationfolder/Deskpi-uninstall /usr/bin/
 sudo chmod 755 /usr/bin/deskpi-config
+sudo chcon -u system_u -t bin_t /usr/bin/deskpi-config
 sudo chmod 755 /usr/bin/Deskpi-uninstall
+sudo chcon -u system_u -t bin_t /usr/bin/Deskpi-uninstall
+sudo restorecon -vr /usr/bin/
 
 # Build Fan Daemon
 echo "[Unit]" > $deskpidaemon
@@ -74,9 +79,12 @@ echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 log_warning_msg "DeskPi Service configuration finished." 
 sudo chown root:root $safeshutdaemon
 sudo chmod 644 $safeshutdaemon
+chcon -u system_u -t systemd_unit_file_t $safeshutdaemon
 
 sudo chown root:root $deskpidaemon
 sudo chmod 644 $deskpidaemon
+chcon -u system_u -t systemd_unit_file_t $deskpidaemon
+restorecon -vr /lib/systemd/system/
 
 log_warning_msg "DeskPi Service Load module." 
 sudo systemctl daemon-reload
