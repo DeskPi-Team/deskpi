@@ -2,7 +2,7 @@
 # 
 
 function pre-reqs() {
-    sudo dnf install git redhat-lsb-core -y
+    sudo dnf install git redhat-lsb-core glibc-devel.aarch64 glibc-headers-s390.noarch glibc-headers-x86.noarch glibc-common.aarch64 glibc-static gcc make -y
 }
 
 if [[ ! -f /lib/lsb/init-functions ]]; then
@@ -34,13 +34,16 @@ sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/efi/config.txt
 if [ $? -eq 0 ]; then
    log_success_msg "dwc2 has been setting up successfully"
 fi
+
 # install PWM fan control daemon.
 log_warning_msg "DeskPi main control service loaded."
-cd $installationfolder/drivers/c/ 
-sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/
+cd $installationfolder/drivers/c/
+make clean
+make
+sudo cp -rf $installationfolder/drivers/c/pwmControlFan /usr/bin/
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/
-sudo chmod 755 /usr/bin/pwmFanControl
-sudo chcon -u system_u -t bin_t /usr/bin/pwmFanControl
+sudo chmod 755 /usr/bin/pwmControlFan
+sudo chcon -u system_u -t bin_t /usr/bin/pwmControlFan
 sudo chmod 755 /usr/bin/fanStop
 sudo chcon -u system_u -t bin_t /usr/bin/fanStop
 sudo cp -rf $installationfolder/deskpi-config /usr/bin/
@@ -58,7 +61,7 @@ echo "After=multi-user.target" >> $deskpidaemon
 echo "[Service]" >> $deskpidaemon
 echo "Type=simple" >> $deskpidaemon
 echo "RemainAfterExit=no" >> $deskpidaemon
-echo "ExecStart=sudo /usr/bin/pwmFanControl" >> $deskpidaemon
+echo "ExecStart=/usr/bin/pwmControlFan" >> $deskpidaemon
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
@@ -70,7 +73,7 @@ echo "Before=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 echo "DefaultDependencies=no" >> $safeshutdaemon
 echo "[Service]" >> $safeshutdaemon
 echo "Type=oneshot" >> $safeshutdaemon
-echo "ExecStart=/usr/bin/sudo /usr/bin/fanStop" >> $safeshutdaemon
+echo "ExecStart=/usr/bin/fanStop" >> $safeshutdaemon
 echo "RemainAfterExit=yes" >> $safeshutdaemon
 echo "TimeoutSec=1" >> $safeshutdaemon
 echo "[Install]" >> $safeshutdaemon
