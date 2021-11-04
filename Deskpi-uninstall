@@ -19,31 +19,37 @@ log_action_msg "1 - Raspbian"
 log_action_msg "2 - Manjaro/Arch"
 log_action_msg "3 - Ubuntu Mate"
 log_action_msg "4 - Kali"
-log_action_msg "5 - Cancel Uninstallation Process"
+log_action_msg "5 - Fedora"
+log_action_msg "6 - Cancel Uninstallation Process"
 log_action_msg "Just input the number and press enter."
 read -p "Your choice:" os_type
 case $os_type in
 	1) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   log_action_msg "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	2) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   log_action_msg "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall-manjaro.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	3) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   log_action_msg "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall-ubuntu-mate.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	4) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   log_action_msg "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall-kali.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	5) 
+	   log_warning_msg "Uninstalling DeskPi Utilities"
+	   bash $installation_dir/uninstall-fedora.sh
+	   sh -c "rm -f /etc/deskpi.conf" 
+	   ;;
+	6) 
 	   log_action_msg "Uninstallation Canceled"
 	   ;;
 	*) 
