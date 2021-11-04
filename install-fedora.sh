@@ -20,7 +20,7 @@ safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
 installationfolder=$HOME/$daemonname
 
 # install wiringPi library.
-log_warning_msg "DeskPi Fan control script installation Start." 
+echo "DeskPi Fan control script installation Start." 
 
 # Create service file on system.
 if [ -e $deskpidaemon ]; then
@@ -28,7 +28,7 @@ if [ -e $deskpidaemon ]; then
 fi
 
 # adding dtoverlay to enable dwc2 on host mode.
-log_warning_msg "Enable dwc2 on Host Mode"
+echo "Enable dwc2 on Host Mode"
 sudo sed -i '/dtoverlay=dwc2*/d' /boot/efi/config.txt
 sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/efi/config.txt 
 if [ $? -eq 0 ]; then
@@ -36,7 +36,7 @@ if [ $? -eq 0 ]; then
 fi
 
 # install PWM fan control daemon.
-log_warning_msg "DeskPi main control service loaded."
+echo "DeskPi main control service loaded."
 cd $installationfolder/drivers/c/
 make clean
 make
@@ -79,7 +79,7 @@ echo "TimeoutSec=1" >> $safeshutdaemon
 echo "[Install]" >> $safeshutdaemon
 echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 
-log_warning_msg "DeskPi Service configuration finished." 
+echo "DeskPi Service configuration finished." 
 sudo chown root:root $safeshutdaemon
 sudo chmod 644 $safeshutdaemon
 chcon -u system_u -t systemd_unit_file_t $safeshutdaemon
@@ -89,7 +89,7 @@ sudo chmod 644 $deskpidaemon
 chcon -u system_u -t systemd_unit_file_t $deskpidaemon
 restorecon -vr /lib/systemd/system/
 
-log_warning_msg "DeskPi Service Load module." 
+echo "DeskPi Service Load module." 
 sudo systemctl daemon-reload
 sudo systemctl enable $daemonname.service
 sudo systemctl start $daemonname.service &
@@ -98,7 +98,7 @@ sudo systemctl enable $daemonname-safeshut.service
 # Finished 
 log_success_msg "DeskPi PWM Fan Control and Safeshut Service installed successfully." 
 # greetings and require rebooting system to take effect.
-log_warning_msg "System will reboot in 5 seconds to take effect." 
+echo "System will reboot in 5 seconds to take effect." 
 sudo sync
 sleep 5 
 sudo reboot
