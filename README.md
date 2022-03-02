@@ -95,7 +95,7 @@ sudo ./uninstall-raspios-64bit.sh
 ```
 apt-get update && apt-get -y install git 
 ```
-* Image Download URL:  https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Buster.7z
+* Image Download URL:  https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Bullseye.7z
 ```bash
 cd ~
 git clone https://github.com/DeskPi-Team/deskpi.git
