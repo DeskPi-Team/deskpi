@@ -13,41 +13,47 @@ systemctl disable deskpi.service
 # Define file locations
 installation_dir="/home/pi/deskpi"
 # Greetings and information for user.
-log_action_msg "Welcome to Use DeskPi-Team's Product"
-log_action_msg "Please select what distribution you have: "
-log_action_msg "1 - Raspbian"
-log_action_msg "2 - Manjaro/Arch"
-log_action_msg "3 - Ubuntu Mate"
-log_action_msg "4 - Kali"
-log_action_msg "5 - Cancel Uninstallation Process"
-log_action_msg "Just input the number and press enter."
+echo "Welcome to Use DeskPi-Team's Product"
+echo "Please select what distribution you have: "
+echo "1 - Raspbian"
+echo "2 - Manjaro/Arch"
+echo "3 - Ubuntu Mate"
+echo "4 - Kali"
+echo "5 - Fedora"
+echo "6 - Cancel Uninstallation Process"
+echo "Just input the number and press enter."
 read -p "Your choice:" os_type
 case $os_type in
 	1) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   echo "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	2) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   echo "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall-manjaro.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	3) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   echo "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall-ubuntu-mate.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	4) 
-	   log_action_msg "Uninstalling DeskPi Utilitis"
+	   echo "Uninstalling DeskPi Utilities"
 	   bash $installation_dir/uninstall-kali.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	5) 
-	   log_action_msg "Uninstallation Canceled"
+	   echo "Uninstalling DeskPi Utilities"
+	   bash $installation_dir/uninstall-fedora.sh
+	   sh -c "rm -f /etc/deskpi.conf" 
+	   ;;
+	6) 
+	   echo "Uninstallation Canceled"
 	   ;;
 	*) 
-	   log_action_msg "Error selection please try again"
+	   echo "Error selection please try again"
 	   . /usr/local/bin/Deskpi-uninstall
 	   ;;
 esac

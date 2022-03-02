@@ -23,7 +23,7 @@ function set_config() {
 	fi
 	sudo touch /etc/deskpi.conf
 	sudo chmod 777 /etc/deskpi.conf
-	log_action_msg "Under normal circumstances, we recommend four gears. The
+	echo "Under normal circumstances, we recommend four gears. The
 	following requires you to control the fan's operating status according to
 	the temperature and speed defined by yourself, and you need to input 4
 	different temperature thresholds (for example: 42, 50, 60, 70) , And 4 PWM
@@ -37,62 +37,62 @@ function set_config() {
 	sudo sh -c "echo $temp" >> /etc/deskpi.conf  
 	sudo sh -c "echo $fan_speed_level" >> /etc/deskpi.conf  
 	done 
-	log_action_msg "Configuration file has been created on /etc/deskpi.conf"
+	echo "Configuration file has been created on /etc/deskpi.conf"
 }
 
 # Greetings and information for user.
-log_action_msg "Welcome to Use DeskPi-Team's Product"
-log_action_msg "Please select speed level that you want: "
-log_action_msg "It will always run at the speed level that you choosed."
-log_action_msg "---------------------------------------------------------------"
-log_action_msg "1 - set fan speed level to 25%"
-log_action_msg "2 - set fan speed level to 50%"
-log_action_msg "3 - set fan speed level to 75%"
-log_action_msg "4 - set fan speed level to 100%"
-log_action_msg "5 - Turn off Fan"
-log_action_msg "6 - Adjust the start speed level according to the temperature"
-log_action_msg "7 - Cancel manual control and enable automatical fan control"
-log_action_msg "---------------------------------------------------------------"
-log_action_msg "Just input the number and press enter."
+echo "Welcome to Use DeskPi-Team's Product"
+echo "Please select speed level that you want: "
+echo "It will always run at the speed level that you choosed."
+echo "---------------------------------------------------------------"
+echo "1 - set fan speed level to 25%"
+echo "2 - set fan speed level to 50%"
+echo "3 - set fan speed level to 75%"
+echo "4 - set fan speed level to 100%"
+echo "5 - Turn off Fan"
+echo "6 - Adjust the start speed level according to the temperature"
+echo "7 - Cancel manual control and enable automatical fan control"
+echo "---------------------------------------------------------------"
+echo "Just input the number and press enter."
 read -p "Your choice:" levelNumber
 case $levelNumber in
 	1) 
-	   log_action_msg "You've select 25% speed level"
+	   echo "You've select 25% speed level"
 	   sudo sh -c "echo pwm_025 > $serial_port"
-	   log_action_msg "Fan speed level has been change to 25%"
+	   echo "Fan speed level has been change to 25%"
 	   ;;
 	2) 
-	   log_action_msg "You've select 50% speed level"
+	   echo "You've select 50% speed level"
 	   sudo sh -c "echo pwm_050 > $serial_port"
-	   log_action_msg "Fan speed level has been change to 50%"
+	   echo "Fan speed level has been change to 50%"
 	   ;;
 	3) 
-	   log_action_msg "You've select 75% speed level"
+	   echo "You've select 75% speed level"
 	   sudo sh -c "echo pwm_075 > $serial_port"
-	   log_action_msg "Fan speed level has been change to 75%"
+	   echo "Fan speed level has been change to 75%"
 	   ;;
 	4) 
-	   log_action_msg "You'tve select 100% speed level"
+	   echo "You'tve select 100% speed level"
 	   sudo sh -c "echo pwm_100 > $serial_port"
-	   log_action_msg "Fan speed level has been change to 100%"
+	   echo "Fan speed level has been change to 100%"
 	   ;;
 	5) 
-	   log_action_msg "Turn off fan"
+	   echo "Turn off fan"
 	   sudo sh -c "echo pwm_000 > $serial_port"
-	   log_action_msg "Fan speed level has been turned off."
+	   echo "Fan speed level has been turned off."
 	   ;;
 	6) 
-	   log_action_msg "Customizing the start speed level according the temperature"
+	   echo "Customizing the start speed level according the temperature"
 	   sudo systemctl stop deskpi.service & 
 	   set_config
 	   sudo systemctl start deskpi.service & 
 	   ;;
 	7) 
-	   log_action_msg "Cancel manual control and enable automatical fan control"
+	   echo "Cancel manual control and enable automatical fan control"
 	   sudo systemctl start deskpi.service &
 	   ;;
 	*) 
-	   log_action_msg "You type the wrong selection, please try again!"
+	   echo "You type the wrong selection, please try again!"
 	   . /usr/bin/deskpi-config
 	   ;;
 esac
