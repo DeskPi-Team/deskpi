@@ -15,7 +15,6 @@ The DeskPi Pro is a hardware kit for converting a standard Raspberry Pi 4 from a
 * DietPi OS (64bit) - tested
 * Volumio OS Version: 2021-04-24-Pi (32bit) - tested 
 * RetroPie OS (32bit) - tested
-* OSMC OS (64bits) Version 2021.12-1 - tested 
 * Windows 10 IoT - NOT Supported 
 * Windows 11 - To be tested 
 
@@ -138,15 +137,6 @@ sudo ./install.sh
 deskpi-config
 ```
 Select `4` and press `Enter`, you would see the fan is spinning and the front USB port are now available.
-
-### For OSMC 64bit OS
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install-osmc.sh
-sudo ./install-osmc.sh
-```
 
 ## How to Uninstall deskpi
 ```bash
