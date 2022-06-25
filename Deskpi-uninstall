@@ -17,7 +17,7 @@ echo "Welcome to Use DeskPi-Team's Product"
 echo "Please select what distribution you have: "
 echo "1 - Raspbian"
 echo "2 - Manjaro/Arch"
-echo "3 - Ubuntu Mate"
+echo "3 - Ubuntu"
 echo "4 - Kali"
 echo "5 - Fedora"
 echo "6 - Cancel Uninstallation Process"
@@ -36,7 +36,7 @@ case $os_type in
 	   ;;
 	3) 
 	   echo "Uninstalling DeskPi Utilities"
-	   bash $installation_dir/uninstall-ubuntu-mate.sh
+	   bash $installation_dir/uninstall-ubuntu-all-32-64bit.sh
 	   sh -c "rm -f /etc/deskpi.conf" 
 	   ;;
 	4) 

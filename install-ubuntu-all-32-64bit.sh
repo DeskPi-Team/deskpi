@@ -3,9 +3,11 @@
 . /lib/lsb/init-functions
 
 daemonname="deskpi"
+arch="$(uname -m | grep -o 64)"
 tempmonscript=/usr/bin/pmwFanControl
 deskpidaemon=/lib/systemd/system/$daemonname.service
 safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
+
 # Thanks for muckypaws' help, solve the location problem.
 installationfolder=/home/$SUDO_USER/deskpi
 
@@ -19,17 +21,21 @@ fi
 
 # adding dtoverlay to enable dwc2 on host mode.
 sudo sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt 
-sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt 
+sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt
+
+# fix ttyUSB0
+if [ -e /lib/udev/rules.d/*-brltty.rules ]; then
+sudo sed -i 's/ENV{PRODUCT}=="1a86\/7523/#ENV{PRODUCT}=="1a86\/7523/g' /lib/udev/rules.d/*-brltty.rules; fi
 
 # install PWM fan control daemon.
 log_action_msg "DeskPi main control service loaded."
 cd $installationfolder/drivers/c/ 
-sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
-sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
-sudo cp -rf $installationfolder/deskpi-config  /usr/bin/deskpi-config
-sudo cp -rf $installationfolder/Deskpi-uninstall  /usr/bin/Deskpi-uninstall
-sudo chmod 755 /usr/bin/pwmFanControl
-sudo chmod 755 /usr/bin/fanStop
+sudo cp -rf $installationfolder/drivers/c/pwmFanControl$arch /usr/bin/pwmFanControl$arch
+sudo cp -rf $installationfolder/drivers/c/safecutoffpower$arch /usr/bin/safecutoffpower$arch
+sudo cp -rf $installationfolder/deskpi-config /usr/bin/deskpi-config
+sudo cp -rf $installationfolder/Deskpi-uninstall /usr/bin/Deskpi-uninstall
+sudo chmod 755 /usr/bin/pwmFanControl$arch
+sudo chmod 755 /usr/bin/safecutoffpower$arch
 sudo chmod 755 /usr/bin/deskpi-config
 sudo chmod 755 /usr/bin/Deskpi-uninstall
 
@@ -40,7 +46,7 @@ echo "After=multi-user.target" >> $deskpidaemon
 echo "[Service]" >> $deskpidaemon
 echo "Type=oneshot" >> $deskpidaemon
 echo "RemainAfterExit=true" >> $deskpidaemon
-echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
+echo "ExecStart=pwmFanControl$arch &" >> $deskpidaemon
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
@@ -52,7 +58,7 @@ echo "Before=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 echo "DefaultDependencies=no" >> $safeshutdaemon
 echo "[Service]" >> $safeshutdaemon
 echo "Type=oneshot" >> $safeshutdaemon
-echo "ExecStart=/usr/bin/sudo /usr/bin/fanStop" >> $safeshutdaemon
+echo "ExecStart=safecutoffpower$arch" >> $safeshutdaemon
 echo "RemainAfterExit=yes" >> $safeshutdaemon
 echo "[Install]" >> $safeshutdaemon
 echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
