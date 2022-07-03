@@ -24,7 +24,7 @@ sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt
 # install PWM fan control daemon.
 log_action_msg "DeskPi main control service loaded."
 cd $installationfolder/drivers/c/ 
-mv $installationfolder/drivers/c/pwmFanControl $installationfolder/drivers/c/pwmFanControl.old
+mv $installationfolder/drivers/c/pwmFanControl $installationfolder/drivers/c/pwmFanControl.old 2>/dev/null
 gcc -o $installationfolder/drivers/c/pwmFanControl $installationfolder/drivers/c/pwmControlFan.c
 sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
