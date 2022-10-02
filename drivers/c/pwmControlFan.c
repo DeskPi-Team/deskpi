@@ -7,6 +7,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <math.h>
+
+//#define TEST_MODE
+#define PERCENTAGE 10 // switch over percentage range
+
 
 static int serial_port=0;
 /* initialized the serial port*/
@@ -25,9 +30,9 @@ int init_serial( char *serial_name)
 		printf("Please check serial port over OTG\n");
 	}
 
-	tty.c_cflag &= ~PARENB; 
+	tty.c_cflag &= ~PARENB;
 	tty.c_cflag |= PARENB;
-	tty.c_cflag &= ~CSTOPB; 
+	tty.c_cflag &= ~CSTOPB;
 	tty.c_cflag |= CSTOPB;
 
 	tty.c_cflag |= CS5;
@@ -103,6 +108,8 @@ int main(void){
 	char data[8]={0};
 	unsigned int conf_info[8];
 	unsigned int cpu_temp=0;
+	unsigned int last_cpu_temp = 0; // last temperature level recorded
+	unsigned int min_temp = 0; // calculated minimum temperature based on percentage
 	init_serial("/dev/ttyUSB0");
     /* default configuration if /etc/deskpi.conf dose not exist */
 	conf_info[0]=40;
@@ -125,13 +132,15 @@ int main(void){
 			for(i=0;i<8;i++)
 			{
 				bzero(buffer, sizeof(buffer));
-				if (fgets(buffer, 100, fp) != NULL) 
+				if (fgets(buffer, 100, fp) != NULL)
 				{
 					conf_info[i] = atoi(buffer);
 				}
 			}
 		}
-		/* Testing section  
+		fclose(fp);
+
+		/* Testing section
 		  for(i=0;i<8;i++)
 		{
 			printf("temp:%d\n",conf_info[i]);
@@ -139,34 +148,55 @@ int main(void){
 			printf("pwm:%d\n",conf_info[i]);
 		}
 		*/
-		cpu_temp=read_cpu_tmp();
-		//printf("cpu_temp:%d\n",cpu_temp);
+		cpu_temp = read_cpu_tmp();
+		#ifdef TEST_MODE
+		printf("cpu_temp:%d / last_cpu_temp:%d / fan_speed:", cpu_temp, last_cpu_temp);
+		#endif
 
-		if(cpu_temp < conf_info[0])
-		{
-			memcpy( (char *) &data,"pwm_000",sizeof("pwm_000"));
+		if (last_cpu_temp == 0 || cpu_temp > last_cpu_temp) {
+			if(cpu_temp < conf_info[0])
+			{
+				memcpy( (char *) &data, "pwm_000", sizeof("pwm_000"));
+				last_cpu_temp = 0;
+			}
+			else if(cpu_temp >= conf_info[0] && cpu_temp < conf_info[2])
+			{
+				sprintf((char *)&data, "pwm_%03d", conf_info[1]);
+				last_cpu_temp = conf_info[0];
+			}
+			else if(cpu_temp >= conf_info[2] && cpu_temp < conf_info[4])
+			{
+				sprintf((char *)&data, "pwm_%03d", conf_info[3]);
+				last_cpu_temp = conf_info[2];
+			}
+			else if(cpu_temp >= conf_info[4] && cpu_temp < conf_info[6])
+			{
+				sprintf((char *)&data, "pwm_%03d", conf_info[5]);
+				last_cpu_temp = conf_info[4];
+			}
+			else if(cpu_temp >= conf_info[6])
+			{
+				sprintf((char *)&data, "pwm_%03d", conf_info[7]);
+				last_cpu_temp = conf_info[6];
+			}
+			send_serial((char *) &data, sizeof(data));
+			#ifdef TEST_MODE
+			printf("*");
+			#endif
 		}
-		else if(cpu_temp >= conf_info[0] && cpu_temp < conf_info[2])
-		{
-			sprintf((char *)&data,"pwm_%03d",conf_info[1]);
-			//printf("data:%s\n",data);
+
+		// leave fan speed as is if not within pre defined percentage
+		min_temp = last_cpu_temp - round(last_cpu_temp * PERCENTAGE / 100);
+		if (cpu_temp < min_temp) {
+			last_cpu_temp = 0;  // reset level
 		}
-		else if(cpu_temp >= conf_info[2] && cpu_temp < conf_info[4])
-		{
-			sprintf((char *)&data,"pwm_%03d",conf_info[3]);
-			//printf("data:%s\n",data);
-		}
-		else if(cpu_temp >= conf_info[4] && cpu_temp < conf_info[6])
-		{
-			sprintf((char *)&data,"pwm_%03d",conf_info[5]);
-			//printf("data:%s\n",data);
-		}
-		else if(cpu_temp >= conf_info[6])
-		{
-			sprintf((char *)&data,"pwm_%03d",conf_info[7]);
-			//printf("data:%s\n",data);
-		}
-	    send_serial((char *) &data,sizeof(data));
+
+		#ifdef TEST_MODE
+		printf("%s", data);
+		printf(" until min_temp:%d", min_temp);
+		printf("\n");
+		#endif
+
 		sleep(1);
 	}
 	__init_serial();
