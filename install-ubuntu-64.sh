@@ -27,6 +27,7 @@ sudo apt-get install -qy gcc
 cd $installationfolder/drivers/c/ 
 mv $installationfolder/drivers/c/pwmFanControl $installationfolder/drivers/c/pwmFanControl.old 2>/dev/null
 gcc -o $installationfolder/drivers/c/pwmFanControl $installationfolder/drivers/c/pwmControlFan.c
+gcc -o $installationfolder/drivers/c/fanStop $installationfolder/drivers/c/fanStop.c
 sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
 sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
 sudo cp -rf $installationfolder/deskpi-config  /usr/bin/deskpi-config
@@ -57,6 +58,7 @@ echo "[Service]" >> $safeshutdaemon
 echo "Type=oneshot" >> $safeshutdaemon
 echo "ExecStart=/usr/bin/sudo /usr/bin/fanStop" >> $safeshutdaemon
 echo "RemainAfterExit=yes" >> $safeshutdaemon
+echo "TimeoutSec=1" >> $safeshutdaemon
 echo "[Install]" >> $safeshutdaemon
 echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 
