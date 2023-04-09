@@ -42,9 +42,9 @@ echo "[Unit]" > $deskpidaemon
 echo "Description=DeskPi PWM Control Fan Service" >> $deskpidaemon
 echo "After=multi-user.target" >> $deskpidaemon
 echo "[Service]" >> $deskpidaemon
-echo "Type=oneshot" >> $deskpidaemon
-echo "RemainAfterExit=true" >> $deskpidaemon
-echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
+echo "Type=simple" >> $deskpidaemon
+echo "RemainAfterExit=no" >> $deskpidaemon
+echo "ExecStart=sudo /usr/bin/pwmFanControl" >> $deskpidaemon
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
