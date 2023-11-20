@@ -23,6 +23,16 @@ The DeskPi Pro is a hardware kit for converting a standard Raspberry Pi 4 from a
 * Before you install this script, please make sure your Raspberry Pi can access internet and can access github website.
 
 ## How to install it.
+### For Raspbian OS 64bit (bookworm)
+* Step 1. Enable Front USB port
+Edit /boot/firmware/config.txt file and adding following parameter:
+```bash
+dtoverlay=dwc2,dr_mode=host
+```
+Save it and reboot your Raspberry Pi.
+* Step 2. Install fan driver
+TO BE DONE, we are working on it...
+
 ### For Raspbian and RetroPie OS.
 ```bash
 cd ~
