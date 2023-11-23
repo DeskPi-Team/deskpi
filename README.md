@@ -19,7 +19,7 @@ The DeskPi Pro is a hardware kit for converting a standard Raspberry Pi 4 from a
 * Windows 11 - To be tested 
 
 ## Please Read this section carefully
-* if you are using 64bit OS, The script to control the fan is in the `rivers/c/` directory. The file suffix with `64` means `64bit`, and the one without a `32bit` executable file.
+* if you are using 64bit OS, The script to control the fan is in the `drivers/c/` directory. The file suffix with `64` means `64bit`, and the one without a `32bit` executable file.
 * Before you install this script, please make sure your Raspberry Pi can access internet and can access github website.
 
 ## How to install it.
