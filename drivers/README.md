@@ -1,5 +1,5 @@
-# Control Your Fan througn PWM signal via Serial port(OTG)
-## Configure /boot/config.txt to enbale otg function.
+# Control your fan through `PWM` signalling via the serial interface of the USB port (in `OTG` mode)
+## Configure `/boot/config.txt` to enable USB `OTG` mode.
 ```bash
 sudo vim.tiny /boot/config.txt 
 ```
@@ -30,13 +30,17 @@ Press "Ctrl + C"
 make clean
 ```
 ## How to change speed of the fan.
-This program is send the pwm signal from Raspberry Pi to the extension board via OTG serial port, which will be recognized by your Raspberry Pi as "/dev/ttyUSB0" device. so if you want to control the fan as your wish, you can modify pwmControlFan.c code and recompile it.
-* In the default code, we have set 4 level for you Fan on pwm signal:
-* Level 0: 0%  speed-> send "pwm_000" to /dev/ttyUSB0", means to turn off the fan 
-* Level 1: 25% speed-> send "pwm_025" to /dev/ttyUSB0", means to set fan speed to 25%
-* Level 2: 50% speed-> send "pwm_050" to /dev/ttyUSB0", means to set fan speed to 50%
-* Level 3: 75% speed-> send "pwm_075" to /dev/ttyUSB0", means to set fan speed to 75%
-* Level 4:100% speed-> send "pwm_100" to /dev/ttyUSB0", means to set fan speed to 100%
+This program sends a `PWM` signal from your Raspberry Pi to the extension board, via USB port in `OTG` mode, which will your Raspberry Pi recognizes as the `/dev/ttyUSB0` device. 
+
+So if you want to control the fan as your wish, you can modify the code in `pwmControlFan.c` and recompile it.
+
+However, as defaults, we have set 4 levels users can apply, via `PWM` signal:
+
+* Level 0: 0%  speed-> send `pwm_000` to `/dev/ttyUSB0` , means to turn off the fan 
+* Level 1: 25% speed-> send `pwm_025` to `/dev/ttyUSB0` , means to set fan speed to 25%
+* Level 2: 50% speed-> send `pwm_050` to `/dev/ttyUSB0` , means to set fan speed to 50%
+* Level 3: 75% speed-> send `pwm_075` to `/dev/ttyUSB0` , means to set fan speed to 75%
+* Level 4:100% speed-> send `pwm_100` to `/dev/ttyUSB0` , means to set fan speed to 100%
 
 # Python
 ## How to control fan through PWM signal via serial port.
