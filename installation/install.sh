@@ -44,7 +44,7 @@ deskpi_rules_file="/etc/udev/rules.d/10-deskpi.rules"
 
 if [[ ! -e $deskpi_rules_file ]]; then
   sudo sh -c "sudo cat <<EOF > '$deskpi_rules_file'
-  ACTION==\"add\", ATTRS{$idVendor},ATTRS{$idProduct},SYMLINK+="DeskPi_FAN"
+  ACTION==\"add\", ATTRS{\"$idVendor\"},ATTRS{\"$idProduct\"},SYMLINK+=\"DeskPi_FAN\"
   EOF"
   sudo sh -c "sudo udevadm control --reload-rules"
   sudo sh -c "sudo udevadm trigger"
