@@ -23,6 +23,13 @@ if [[ -e /lib/lsb/init-functions ]]; then
   log_action_msg "Initializing functions..."
 fi
 
+# Install figlet display information 
+sudo sh -c "sudo apt update"
+sudo sh -c "sudo apt -y install figlet"
+sudo sh -c "echo 'DESKPI PRO INSTALLATION' | figlet -c"
+sleep 3
+sudo sh -c "echo 'STARTING...' | figlet -c"
+
 # OS information detection 
 OS_version=`lsb_release -a|grep -i codename |awk '{print $2}'`
 if [[ $OS_version != 'bookworm' ]]; then
@@ -65,12 +72,13 @@ pkgStatus=`sudo dpkg-query -l git |grep git | awk '{print $1}'`
 if [[ $pkgStatus != 'ii' ]]; then
   sudo sh -c "sudo apt-get update"
   sudo sh -c "sudo apt-get -y install git-core"
+  
 fi
 
 # Check if dwc2 dtoverlay has been enabled.
 checkResult=`grep dwc2 /boot/firmware/config.txt`
 if [[ $? -ne 0 ]];  then
-  log_warning_msg "Adding dtoverlay=dwc2,dr_mode=host to /boot/firmware/config.txt file."
+  log_action_msg "Adding dtoverlay=dwc2,dr_mode=host to /boot/firmware/config.txt file."
   sudo sh -c "sudo sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt"
   sudo sh -c "sudo sed -i '\$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt"
   log_action_msg "check dwc2 overlay will be enabled after rebooting."
@@ -82,20 +90,20 @@ if [[ ! -d /tmp/deskpi ]]; then
    while [[ ! -d /tmp/deskpi ]]; 
    do
   	log_warning_msg "Could not able to download deskpi repo,will retry again."
-	sh -c "git clone https://github.com/DeskPi-Team/deskpi.git"
+	sh -c "git clone -b feature/bookworm https://github.com/DeskPi-Team/deskpi.git"
    done
 fi
 
 
 # copy pre-compiled binary file to /usr/bin/ folder
 #
-if [[ -d /tmp/deskpi/ ]]; then
+if [[ -d /tmp/deskpi ]]; then
   sudo sh -c "sudo mkdir -pv /usr/bin/deskpi/"
-  sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/drivers/c/pwmFanControl64 /usr/bin/deskpi/pwmFanControl64" 
-  sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/drivers/c/safecutoffpower64 /usr/bin/deskpi/safecutoffpower64"
+  sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/drivers/c/pwmControlFan64 /usr/bin/deskpi/pwmControlFan64 && echo 'Copy ok'" 
+  sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/drivers/c/safeCutOffPower64 /usr/bin/deskpi/safeCutOffPower64 && echo 'Copy ok'"
   sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/deskpi-config  /usr/bin/deskpi-config"
-  sudo sh -c "sudo chmod +x /usr/bin/deskpi/pwmFanControl64"
-  sudo sh -c "sudo chmod +x /usr/bin/deskpi/safecutoffpower64"
+  sudo sh -c "sudo chmod +x /usr/bin/deskpi/pwmControlFan64"
+  sudo sh -c "sudo chmod +x /usr/bin/deskpi/safeCutOffPower64"
   sudo sh -c "sudo chmod +x /usr/bin/deskpi-config"
 fi
 
@@ -108,7 +116,7 @@ After=multi-user.target
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/usr/bin/deskpi/pwmFanControl64 
+ExecStart=/usr/bin/deskpi/pwmControlFan64 
 [Install]
 WantedBy=multi-user.target
 
@@ -126,7 +134,7 @@ Before=halt.target shutdown.target poweroff.target
 DefaultDependencies=no
 [Service]
 Type=oneshot
-ExecStart= /usr/bin/deskpi/safecutoffpower64
+ExecStart=/usr/bin/deskpi/safeCutOffPower64
 RemainAfterExit=yes
 [Install]
 WantedBy=halt.target shutdown.target poweroff.target
@@ -160,4 +168,4 @@ else
   log_success_msg "Usage: ./install.sh"
 fi
 
-sudo sh -c "sudo sync && sleep 5 && sudo reboot"
+# sudo sh -c "sudo sync && sleep 5 && sudo reboot"
