@@ -117,9 +117,9 @@ sudo sh -c "sudo cat <<EOF > '$deskpi_service_file'
 Description=DeskPi Fan Control Service
 After=multi-user.target
 [Service]
-Type=oneshot
+Type=simple
 RemainAfterExit=true
-ExecStart=/usr/bin/deskpi/pwmControlFan64 
+ExecStart=/usr/bin/sudo /usr/bin/deskpi/pwmControlFan64 
 [Install]
 WantedBy=multi-user.target
 
@@ -137,7 +137,7 @@ Before=halt.target shutdown.target poweroff.target
 DefaultDependencies=no
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/deskpi/safeCutOffPower64
+ExecStart=/usr/bin/sudo /usr/bin/deskpi/safeCutOffPower64
 RemainAfterExit=yes
 [Install]
 WantedBy=halt.target shutdown.target poweroff.target
@@ -151,14 +151,16 @@ if [[ -e $deskpi_service_file ]]; then
   sudo sh -c "sudo chown root:root $deskpi_service_file"
   sudo sh -c "sudo chmod 755 $deskpi_service_file"
   log_action_msg "Load DeskPi service and load modules"
-  sudo sh -c "sudo systemctl enable $deskpi_service_file"
-  sudo sh -c "sudo systemctl start $deskpi_service_file"
+  sudo sh -c "sudo systemctl daemon-reload"
+  sudo sh -c "sudo systemctl enable deskpi.service"
+  sudo sh -c "sudo systemctl start deskpi.service"
 fi
 
 if [[ -e $deskpi_powermanager_file ]]; then 
   sudo sh -c "sudo chown root:root $deskpi_powermanager_file"
   sudo sh -c "sudo chmod 755 $deskpi_powermanager_file"
-  sudo sh -c "sudo systemctl enable $deskpi_powermanager_file" 
+  sudo sh -c "sudo systemctl daemon-reload"
+  sudo sh -c "sudo systemctl enable deskpi-cutoffpower.service" 
 fi
 
 
