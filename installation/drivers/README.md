@@ -21,7 +21,7 @@ make
 ```
 * 3. How to run it.
 ```bash
-sudo ./pwmFanControl64
+sudo ./pwmControlFan64
 ```
 * 4. How to stop it.
 Press "Ctrl + C" on keyboard.
@@ -30,10 +30,10 @@ Press "Ctrl + C" on keyboard.
 make clean
 ```
 ## How to change speed of the fan.
-This program is send the pwm signal from Raspberry Pi to the extension board via OTG serial port, which will be recognized by your Raspberry Pi as "/dev/ttyUSB0" device. so if you want to control the fan as your wish, you can modify pwmControlFan.c code and recompile it.
+This program is send the pwm signal from Raspberry Pi to the extension board via OTG serial port, which will be recognized by your Raspberry Pi as "/dev/DeskPi_FAN" device which is symboliclink to /dev/ttyUSB0. so if you want to control the fan as your wish, you can modify pwmControlFan.c code and recompile it.
 * In the default code, we have set 4 level for you Fan on pwm signal:
-* Level 0: 0%  speed-> send "pwm_000" to /dev/ttyUSB0", means to turn off the fan 
-* Level 1: 25% speed-> send "pwm_025" to /dev/ttyUSB0", means to set fan speed to 25%
-* Level 2: 50% speed-> send "pwm_050" to /dev/ttyUSB0", means to set fan speed to 50%
-* Level 3: 75% speed-> send "pwm_075" to /dev/ttyUSB0", means to set fan speed to 75%
-* Level 4:100% speed-> send "pwm_100" to /dev/ttyUSB0", means to set fan speed to 100%
+* Level 0: 0%  speed-> send "pwm_000" to /dev/DeskPi_FAN", means to turn off the fan 
+* Level 1: 25% speed-> send "pwm_025" to /dev/DeskPi_FAN", means to set fan speed to 25%
+* Level 2: 50% speed-> send "pwm_050" to /dev/DeskPi_FAN", means to set fan speed to 50%
+* Level 3: 75% speed-> send "pwm_075" to /dev/DeskPi_FAN", means to set fan speed to 75%
+* Level 4:100% speed-> send "pwm_100" to /dev/DeskPi_FAN", means to set fan speed to 100%
