@@ -81,5 +81,4 @@ do
 done 
 echo "DeskPi Pro!" | figlet -c
 echo "FAREWELL!" | figlet -c
-
-# sudo sh -c "sudo sync && sleep 5 && sudo reboot"
+sudo sh -c "sudo sync && sleep 1 && sudo reboot"

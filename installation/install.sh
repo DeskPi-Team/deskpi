@@ -167,5 +167,7 @@ else
   log_success_warning "Could not download deskpi repository, please check the internet connection and try to execute it again!"
   log_success_msg "Usage: ./install.sh"
 fi
-
-# sudo sh -c "sudo sync && sleep 5 && sudo reboot"
+echo "DESKPI PRO" |figlet -c 
+echo "INSTALLATION SUCCESSFULL!" | figlet -c
+echo "REBOOT IN 5 SECONDS" | figlet -c
+sudo sh -c "sudo sync && sleep 5 && sudo reboot"
