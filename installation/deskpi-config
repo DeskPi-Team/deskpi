@@ -1,0 +1,98 @@
+#!/bin/bash	
+# This is a fan speed control utility tool for user to customize fan speed.
+# Priciple: send speed argument to the MCU 
+# Technical Part
+# There are four arguments:
+# pwm_025 means sending 25% PWM signal to MCU. The fan will run at 25% speed level. 
+# pwm_050 means sending 50% PWM signal to MCU. The fan will run at 50% speed level.
+# pwm_075 means sending 75% PWM signal to MCU. The fan will run at 75% speed level.
+# pwm_100 means sending 100% PWM signal to MCU.The fan will run at 100% speed level. 
+# 
+. /lib/lsb/init-functions
+# This is the serial port that connect to deskPi mainboard and it will
+# communicate with Raspberry Pi and get the signal for fan speed adjusting.
+serial_port='/dev/DeskPi_FAN'
+
+# Stop deskpi.service so that user can define the speed level.
+sudo systemctl stop deskpi.service
+
+# Define the function of set_config 
+function set_config() {
+	if [ -e /etc/deskpi.conf ]; then
+		sudo sh -c "rm -f /etc/deskpi.conf" 
+	fi
+	sudo sh -c "sudo touch /etc/deskpi.conf"
+	sudo sh -c "sudo chmod 777 /etc/deskpi.conf"
+	echo "Under normal circumstances, we recommend four gears. The
+	following requires you to control the fan's operating status according to
+	the temperature and speed defined by yourself, and you need to input 4
+	different temperature thresholds (for example: 42, 50, 60, 70) , And 4 PWM
+	values of different speeds parameters(for example 25, 50, 75, 100, this is the default
+	value),you can define the speed level during 0-100." 
+	for i in `seq 1 4`;
+	do 
+	echo -e "\e[32;40mCurrent CPU Temperature:\e[0m \e[31;40m`vcgencmd measure_temp`\e[0m\n"
+	read -p  "Temperature_threshold_$i:" temp 
+        read -p  "Fan_Speed level_$i:" fan_speed_level
+	sudo sh -c "echo $temp" >> /etc/deskpi.conf  
+	sudo sh -c "echo $fan_speed_level" >> /etc/deskpi.conf  
+	done 
+	echo "Configuration file has been created on /etc/deskpi.conf"
+}
+
+# Greetings and information for user.
+echo "Welcome to Use DeskPi-Team's Product"
+echo "Please select speed level that you want: "
+echo "It will always run at the speed level that you choosed."
+echo "---------------------------------------------------------------"
+echo "1 - set fan speed level to 25%"
+echo "2 - set fan speed level to 50%"
+echo "3 - set fan speed level to 75%"
+echo "4 - set fan speed level to 100%"
+echo "5 - Turn off Fan"
+echo "6 - Adjust the start speed level according to the temperature"
+echo "7 - Cancel manual control and enable automatical fan control"
+echo "---------------------------------------------------------------"
+echo "Just input the number and press enter."
+read -p "Your choice:" levelNumber
+case $levelNumber in
+	1) 
+	   echo "You've select 25% speed level"
+	   sudo sh -c "echo pwm_025 > $serial_port"
+	   echo "Fan speed level has been change to 25%"
+	   ;;
+	2) 
+	   echo "You've select 50% speed level"
+	   sudo sh -c "echo pwm_050 > $serial_port"
+	   echo "Fan speed level has been change to 50%"
+	   ;;
+	3) 
+	   echo "You've select 75% speed level"
+	   sudo sh -c "echo pwm_075 > $serial_port"
+	   echo "Fan speed level has been change to 75%"
+	   ;;
+	4) 
+	   echo "You'tve select 100% speed level"
+	   sudo sh -c "echo pwm_100 > $serial_port"
+	   echo "Fan speed level has been change to 100%"
+	   ;;
+	5) 
+	   echo "Turn off fan"
+	   sudo sh -c "echo pwm_000 > $serial_port"
+	   echo "Fan speed level has been turned off."
+	   ;;
+	6) 
+	   echo "Customizing the start speed level according the temperature"
+	   sudo systemctl stop deskpi.service & 
+	   set_config
+	   sudo systemctl start deskpi.service & 
+	   ;;
+	7) 
+	   echo "Cancel manual control and enable automatical fan control"
+	   sudo systemctl start deskpi.service &
+	   ;;
+	*) 
+	   echo "You type the wrong selection, please try again!"
+	   . /usr/bin/deskpi-config
+	   ;;
+esac

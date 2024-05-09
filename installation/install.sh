@@ -99,8 +99,11 @@ fi
 #
 if [[ -d /tmp/deskpi ]]; then
   sudo sh -c "sudo mkdir -pv /usr/bin/deskpi/"
+  if [[ -e /tmp/deskpi/installation/drivers/c/pwmControlFan64 ]]; then
   sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/drivers/c/pwmControlFan64 /usr/bin/deskpi/pwmControlFan64 && echo 'Copy ok'" 
   sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/drivers/c/safeCutOffPower64 /usr/bin/deskpi/safeCutOffPower64 && echo 'Copy ok'"
+  fi 
+
   sudo sh -c "sudo cp -Rvf /tmp/deskpi/installation/deskpi-config  /usr/bin/deskpi-config"
   sudo sh -c "sudo chmod +x /usr/bin/deskpi/pwmControlFan64"
   sudo sh -c "sudo chmod +x /usr/bin/deskpi/safeCutOffPower64"
