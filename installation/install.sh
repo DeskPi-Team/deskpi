@@ -44,11 +44,27 @@ deskpi_rules_file="/etc/udev/rules.d/10-deskpi.rules"
 
 if [[ ! -e $deskpi_rules_file ]]; then
   sudo sh -c "sudo cat <<EOF > '$deskpi_rules_file'
-  ACTION==\"add\", ATTRS{\"$idVendor\"},ATTRS{\"$idProduct\"},SYMLINK+=\"DeskPi_FAN\"
+  ACTION==\"add\",SUBSYSTEM==\"tty\",ATTRS{\"$idVendor\"},ATTRS{\"$idProduct\"},SYMLINK+=\"DeskPi_FAN\"
   EOF"
+  sudo sh -c "sudo chmod 0666 $deskpi_rules_file"
   sudo sh -c "sudo udevadm control --reload-rules"
   sudo sh -c "sudo udevadm trigger"
 fi
+
+# Adding /etc/deskpi.conf file 
+deskpi_config="/etc/deskpi.conf"
+if [[ ! -e $deskpi_config ]]; then
+  sh -c "cat <<EOF > '$deskpi_config' 
+  40
+  100
+  50
+  100
+  55
+  100
+  60
+  100
+  EOF"
+fi 
 
 # Remove old repository.
 if [[ -d /tmp/deskpi ]]; then

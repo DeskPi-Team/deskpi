@@ -11,10 +11,11 @@
 . /lib/lsb/init-functions
 # This is the serial port that connect to deskPi mainboard and it will
 # communicate with Raspberry Pi and get the signal for fan speed adjusting.
-serial_port='/dev/DeskPi_FAN'
+serial_port='/dev/ttyUSB0'
 
 # Stop deskpi.service so that user can define the speed level.
 sudo systemctl stop deskpi.service
+sudo systemctl daemon-reload
 
 # Define the function of set_config 
 function set_config() {
@@ -41,7 +42,8 @@ function set_config() {
 }
 
 # Greetings and information for user.
-echo "Welcome to Use DeskPi-Team's Product"
+#
+echo "DESKPI PRO FAN CONTROL" | figlet -c 
 echo "Please select speed level that you want: "
 echo "It will always run at the speed level that you choosed."
 echo "---------------------------------------------------------------"
@@ -83,13 +85,16 @@ case $levelNumber in
 	   ;;
 	6) 
 	   echo "Customizing the start speed level according the temperature"
-	   sudo systemctl stop deskpi.service & 
+	   sudo systemctl stop deskpi.service 
+	   sudo systemctl daemon-reload
 	   set_config
-	   sudo systemctl start deskpi.service & 
+	   sudo systemctl daemon-reload 
+	   sudo systemctl start deskpi.service  
 	   ;;
 	7) 
 	   echo "Cancel manual control and enable automatical fan control"
-	   sudo systemctl start deskpi.service &
+	   sudo systemctl daemon-reload
+	   sudo systemctl restart deskpi.service 
 	   ;;
 	*) 
 	   echo "You type the wrong selection, please try again!"
