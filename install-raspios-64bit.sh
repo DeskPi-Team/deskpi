@@ -18,29 +18,30 @@ if [ -d /tmp/deskpi ]; then
 fi
 
 if [[ -f $fanDaemon ]]; then
-  sudo systemctl stop deskpi.service
-  sudo systemctl disable deskpi.service
-  rm -f $fanDaemon
+  sudo sh -c "sudo systemctl stop deskpi.service"
+  sudo sh -c "sudo systemctl disable deskpi.service"
+  sudo sh -c "rm -f $fanDaemon"
 fi
 
 if [[ -f $pwrCutOffDaemon ]]; then
-  sudo systemctl disable deskpi-cut-off-power.service
-  rm -f $pwrCutOffDaemon
+  
+  sudo sh -c "sudo systemctl disable deskpi-cut-off-power.service"
+  sudo sh -c "sudo rm -f $pwrCutOffDaemon"
 fi
 
 # install git tool
 pkgStatus=`dpkg-query -l git |grep git | awk '{print $1}'`
 if [ $pkgStatus != 'ii' ]; then
-  apt-get update
-  apt-get -y install git-core
+  sudo sh -c "sudo apt-get update"
+  sudo sh -c "sudo apt-get -y install git-core"
 fi
 
 # check if dwc2 dtoverlay has been enabled.
 checkResult=`grep dwc2 /boot/config.txt`
 if [ $? -ne 0 ];  then
-        log_warning_msg "Adding dtoverlay=dwc2,dr_mode=host to /boot/config.txt file."
-         sed -i '/dtoverlay=dwc2*/d' /boot/config.txt
-         sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt
+  log_warning_msg "Adding dtoverlay=dwc2,dr_mode=host to /boot/config.txt file."
+  sudo sh -c "sudo sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt
+         sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt
         log_action_msg "check dwc2 overlay will be enabled after rebooting."
 fi
 # download deskpi driver
