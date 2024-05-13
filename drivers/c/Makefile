@@ -1,7 +1,7 @@
 DEFAULT: all
 .PHONY: install
 
-all: pwmControlFan fanStop safecutoffpower
+all: pwmControlFan64 safecutoffpower64
 
 install:
 	sudo chmod 755 pwmControlFan fanStop safecutoffpower
