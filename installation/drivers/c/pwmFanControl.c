@@ -13,6 +13,7 @@
 #define PERCENTAGE 10 // switch over percentage range
 
 
+
 static int serial_port=0;
 /* initialized the serial port*/
 int init_serial( char *serial_name)
@@ -98,6 +99,21 @@ unsigned int read_cpu_tmp()
 	return cpu_temp;
 }
 
+
+/* check for poweroff command and shutdown system once user double press power button */
+void check_for_poweroff_command() { 
+	char mcu_message[100];
+	int bytes_read = read(serial_port, mcu_message, sizeof(mcu_message)-1);
+	if (bytes_read > 0){
+		mcu_message[bytes_read] = '\0';
+		if (strstr(mcu_message, "poweroff") != NULL) {
+			system("sudo sync; sudo init 0");
+		}
+
+	}
+}
+
+
 /* main loop */
 int main(void){
 	int i=0;
@@ -113,19 +129,21 @@ int main(void){
 	init_serial("/dev/ttyUSB0");
     /* default configuration if /etc/deskpi.conf dose not exist */
 	conf_info[0]=40;
-	conf_info[1]=25;
+	conf_info[1]=75;
 
 	conf_info[2]=50;
-	conf_info[3]=50;
+	conf_info[3]=75;
 
 	conf_info[4]=65;
-	conf_info[5]=75;
+	conf_info[5]=100;
 
 	conf_info[6]=75;
 	conf_info[7]=100;
 
 	while(1)
 	{
+		check_for_poweroff_command();
+
 		fp = fopen("/etc/deskpi.conf", "r");
 		if(fp != NULL)
 		{
@@ -198,6 +216,7 @@ int main(void){
 		#endif
 
 		sleep(1);
+
 	}
 	__init_serial();
 	return 0;

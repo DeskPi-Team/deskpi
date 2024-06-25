@@ -55,7 +55,7 @@ int main(void){
 	cfsetospeed(&tty, B9600);
 
 	if (tcsetattr(serial_port, TCSANOW, &tty) !=0){
-		printf("Please check out /boot/config.txt file\n");
+		printf("Please check out /boot/firmware/config.txt file\n");
 	}
 
 	char data[10];

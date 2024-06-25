@@ -73,7 +73,7 @@ if [ ! -e $pwrCutOffDaemon ]; then
   echo "DefaultDependencies=no" >> $pwrCutOffDaemon
   echo "[Service]" >> $pwrCutOffDaemon
   echo "Type=oneshot" >> $pwrCutOffDaemon
-  echo "ExecStart= /usr/bin/safeCutOffPower64" >> $pwrCutOffDaemon
+  echo "ExecStart= /usr/bin/safeCutOffPower64 &" >> $pwrCutOffDaemon
   echo "RemainAfterExit=yes" >> $pwrCutOffDaemon
   echo "[Install]" >> $pwrCutOffDaemon
   echo "WantedBy=halt.target shutdown.target poweroff.target" >> $pwrCutOffDaemon
@@ -105,4 +105,4 @@ else
   log_action_msg "Usage: sudo ./install-raspios-64bit.sh"
 fi
 
-# sync && sleep 5 &&  reboot
+sync && sleep 5 &&  reboot
