@@ -17,6 +17,8 @@ if [ -d /tmp/deskpi ]; then
   rm -rf /tmp/deskpi*
 fi
 
+cd /tmp/ && git clone https://github.com/deskpi-team/deskpi
+
 if [[ -f $fanDaemon ]]; then
   sudo sh -c "sudo systemctl stop deskpi.service"
   sudo sh -c "sudo systemctl disable deskpi.service"
