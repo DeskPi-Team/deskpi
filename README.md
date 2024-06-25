@@ -3,115 +3,41 @@
 The DeskPi Pro is a hardware kit for converting a standard Raspberry Pi 4 from a naked SBC, with limited storage, into a mini PC complete with a power button, cooling, better ports and, via SATA then USB3, 2.5" or M.2 SSD storage.
 
 ## Currently tested operating systems that can support Deskpi scripts
-* Raspberry Pi OS(32bit) - tested 
+* Raspberry Pi OS(32bit) - Deprecated 
 * RaspiOS (64bit) - tested 
-* Ubuntu-mate OS(32bit) - tested
-* Ubuntu OS (64bit) - tested 
-* Manjaro OS (32bit) - tested 
-* Manjaro OS (64bit) - To be tested
-* Kali-linux-arm OS (32bit) - tested
-* Kali-linux-arm OS (64-Bit) - To be tested
-* Twister OS v2.0.2 (32bit) - tested 
+* Ubuntu-mate OS(32bit) - Deprecated 
+* Ubuntu OS (64bit) - on testing (24.04)
+* Manjaro OS (32bit) - Deprecated 
+* Manjaro OS (64bit) - tested
+* Kali-linux-arm OS (32bit) - Deprecated
+* Kali-linux-arm OS (64-Bit) - Deprecated 
+* Twister OS v2.0.2 (32bit) - Deprecated 
 * DietPi OS (64bit) - tested
 * Volumio OS Version: 2021-04-24-Pi (32bit) - tested 
 * RetroPie OS (32bit) - tested
 * Windows 10 IoT - NOT Supported 
-* Windows 11 - To be tested 
+* Windows 11 - NOT Supported  
 
 ## Please Read this section carefully
-* if you are using 64bit OS, The script to control the fan is in the `rivers/c/` directory. The file suffix with `64` means `64bit`, and the one without a `32bit` executable file.
+* if you are using 64bit OS, The script to control the fan is in the `installation/drivers/c/` directory. The file suffix with `64` means `64bit`, and the `32bit` executable file has been removed, if you want to use 32bit, please download the repository and compile it by yourself. 
+
 * Before you install this script, please make sure your Raspberry Pi can access internet and can access github website.
 
 ## How to install it.
-### For Raspbian OS 64bit (bookworm)
-* Step 1. Enable Front USB port
-Edit /boot/firmware/config.txt file and adding following parameter:
-```bash
-dtoverlay=dwc2,dr_mode=host
-```
-Save it and reboot your Raspberry Pi.
-* Step 2. Install fan driver
-TO BE DONE, we are working on it...
+* 1. Download the Repository 
+* 2. Enter `installation` directory 
+* 3. Select Your OS type
+* 4. Execute shell script inside the OS folder.
 
-### For Raspbian and RetroPie OS.
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install.sh
-sudo ./install.sh
+For example: 
+
+### For Raspbian OS 64bit (bookworm)
+```bash 
+git clone https://github.com/DeskPi-Team/deskpi.git 
+cd ~/deskpi/installation/RaspberryPiOS/64bit/
+sudo ./install-raspios-64bit.sh 
 ```
-### For Ubuntu 64bit OS
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install-ubuntu-64.sh
-sudo ./install-ubuntu-64.sh
-```
-### For Ubuntu-mate OS
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install-ubuntu-mate.sh
-sudo ./install-ubuntu-mate.sh
-```
-### For Manjaro OS
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install-manjaro.sh
-sudo ./install-manjaro.sh
-```
-### For Kali-linux-arm OS.
-* Image Download URL: https://images.kali.org/arm-images/kali-linux-2020.3a-rpi3-nexmon.img.xz <br>
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install-kali.sh
-sudo ./install-kali.sh
-```
-### For Twister OS v2.0.2
-`OS image: TwisterOSv2-0-2.img`
-* Image Download URL:https://twisteros.com/twisteros.html <br>
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install.sh
-sudo ./install.sh
-```
-### For 64 bit Raspberry Pi OS (aarm64)
-* Image Download URL: http://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2021-05-28/
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-chmod +x install-raspios-64bit.sh
-sudo ./install-raspios-64bit.sh
-```
-* Uninstall: 
-```
-cd ~/deskpi/
-chmod +x install-raspios-64bit.sh
-sudo ./uninstall-raspios-64bit.sh
-```
-### For DietPi OS 64bit 
-* Make sure your OS can access internet and please install `git` first.
-* Execute this command in terminal:
-```
-apt-get update && apt-get -y install git 
-```
-* Image Download URL:  https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Bullseye.7z
-```bash
-cd ~
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd ~/deskpi/
-./install.sh
-```
+
 ### For Volumio OS Version: 2021-04-24-Pi
 * Image Download URL: https://updates.volumio.org/pi/volumio/2.882/volumio-2.882-2021-04-24-pi.img.zip
 * Getting Start:　https://volumio.github.io/docs/User_Manual/Quick_Start_Guide.html
@@ -136,26 +62,23 @@ and then reboot your DeskPi.
 ```
 sudo reboot
 ```
-* Download DeskPi driver from github:
-```
-git clone https://github.com/DeskPi-Team/deskpi.git
-cd deskpi/
-sudo ./install.sh
-```
-* TEST it after rebooting.
+
+###Setting Fan Speed Manually
+* Open a terminal and typing: 
 ```
 deskpi-config
 ```
 Select `4` and press `Enter`, you would see the fan is spinning and the front USB port are now available.
 
-## How to Uninstall deskpi
-```bash
-DeskPi-uninstall 
-```
-And then select the number against to your OS Type.
-### For Windows IoT OS
-* Unsupported due to lacking of driver.
-* Testing version: Midnight falcon
+> NOTE: Once you execute this `deskpi-config` command, the deskpi.service will be stopped at background.
+
+> you will need to execute `sudo systemctl restart deskpi.service` to re-activate it. 
+
+> If `deskpi.service` is in a stopped state, it will not read the configuration in the `/etc/deskpi.conf` file to control the fan. 
+
+> Therefore, if you want the fan to operate automatically according to your custom temperature settings, please ensure that the `deskpi.service` is always running in the background, especially after executing the deskpi-config command, you need to manually restart the `deskpi.service` by executing `sudo systemctl restart deskpi.service` command in a terminal. 
+
+
 ## How to control fan speed mannualy.
 * Open a terminal and typing following command:
 ```bash
@@ -186,7 +109,9 @@ TEMP   : Fan_SPEED_LEVEL
 deskpi-config
 ```
 Select `6` and then input `45` and enter, and then input `50` means setup the fan speed level to `50%` when CPU temp is above 45 degree it has 4 level to setup.
-NOTE: 50% Speed level means you have already send `PWM50` to `/dev/ttyUSB0` port, and this port will available when you add `dtoverlay=dwc2,dr_mode=host` to `/boot/config.txt` file and `reboot` your DeskPi. 
+
+> NOTE: 50% Speed level means you have already send `PWM50` to `/dev/ttyUSB0` port, and this port will available when you add `dtoverlay=dwc2,dr_mode=host` to `/boot/firmware/config.txt` file and `reboot` your DeskPi. 
+
 
 ## How to boot from USB SSD/HDD?
 After initial Raspberry Pi Configuration and once you have Internet Connectivity established, Install the DeskPi Pro Utilities from `https://github.com/DeskPi-Team/deskpi.git`
@@ -208,6 +133,7 @@ sudo raspi-config
 * Select Boot Order, select #1 `USB Boot`, Return to Advanced Options,
 * Select Boot Loader Version, choose `Latest Version`
 * Save & exit
+
 ### Reboot again (to restart with new settings)
 ```bash
 sudo reboot 
@@ -227,6 +153,7 @@ Depending on device the new SD Card Copier can transfer the SD-Card image to the
 Once your USB drive is imaged & ready to boot, shutdown your Deskpi-Pro, remove the SD-Card and power-up to boot from the USB Boot drive, once running & configured you can install your additional software and proceed as usual. 
 <br>
 * Tutorial video: https://youtu.be/wUHZb9E_WDQ  <br>
+
 ## How to Use IR function onboard.
 1. You need to enable `gpio-ir` function by modify `/boot/config.txt` file.
 uncomment this line if not exsit please add it.

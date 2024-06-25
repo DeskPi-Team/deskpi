@@ -17,18 +17,18 @@ if [ -e $deskpidaemon ]; then
 fi
 
 # adding dtoverlay to enable dwc2 on host mode.
-sudo sed -i '/dtoverlay=dwc2*/d' /boot/config.txt 
-sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt 
+sudo sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt 
+sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt 
 
 # install PWM fan control daemon.
 log_action_msg "DeskPi main control service loaded."
-cd $installationfolder/drivers/c/ 
-sudo cp -rf $installationfolder/drivers/c/pwmFanControl /usr/bin/pwmFanControl
-sudo cp -rf $installationfolder/drivers/c/fanStop  /usr/bin/fanStop
-sudo cp -rf $installationfolder/deskpi-config /usr/bin/deskpi-config
-sudo cp -rf $installationfolder/Deskpi-uninstall /usr/bin/Deskpi-uninstall
-sudo chmod 755 /usr/bin/pwmFanControl
-sudo chmod 755 /usr/bin/fanStop
+cd $installationfolder/installation/drivers/c/ 
+sudo cp -rf $installationfolder/installation/drivers/c/pwmFanControl64 /usr/bin/pwmFanControl64
+sudo cp -rf $installationfolder/installation/drivers/c/safeCutOffPower64  /usr/bin/safeCutOffPower64
+sudo cp -rf $installationfolder/installation/deskpi-config /usr/bin/deskpi-config
+sudo cp -rf $installationfolder/installation/Deskpi-uninstall /usr/bin/Deskpi-uninstall
+sudo chmod 755 /usr/bin/pwmFanControl64
+sudo chmod 755 /usr/bin/safeCutOffPower64
 sudo chmod 755 /usr/bin/deskpi-config 
 sudo chmod 755 /usr/bin/Deskpi-uninstall
 
@@ -37,9 +37,9 @@ echo "[Unit]" > $deskpidaemon
 echo "Description=DeskPi PWM Control Fan Service" >> $deskpidaemon
 echo "After=multi-user.target" >> $deskpidaemon
 echo "[Service]" >> $deskpidaemon
-echo "Type=oneshot" >> $deskpidaemon
+echo "Type=simple" >> $deskpidaemon
 echo "RemainAfterExit=true" >> $deskpidaemon
-echo "ExecStart=sudo /usr/bin/pwmFanControl &" >> $deskpidaemon
+echo "ExecStart=sudo /usr/bin/pwmFanControl64 &" >> $deskpidaemon
 echo "[Install]" >> $deskpidaemon
 echo "WantedBy=multi-user.target" >> $deskpidaemon
 
@@ -51,7 +51,7 @@ echo "Before=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 echo "DefaultDependencies=no" >> $safeshutdaemon
 echo "[Service]" >> $safeshutdaemon
 echo "Type=oneshot" >> $safeshutdaemon
-echo "ExecStart=/usr/bin/sudo /usr/bin/fanStop" >> $safeshutdaemon
+echo "ExecStart=/usr/bin/sudo /usr/bin/safeCutOffPower64" >> $safeshutdaemon
 echo "RemainAfterExit=yes" >> $safeshutdaemon
 echo "[Install]" >> $safeshutdaemon
 echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon

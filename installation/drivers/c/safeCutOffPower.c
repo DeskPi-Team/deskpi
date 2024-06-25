@@ -8,14 +8,11 @@
 #include <unistd.h>
 #include <string.h>
 
-#define serial_fan "/dev/DeskPi_FAN"
-
 int main(void){
 	while(1){
- 		int serial_port = open(serial_fan, O_RDWR);
+ 		int serial_port = open("/dev/ttyUSB0", O_RDWR);
 		if (serial_port < 0){
-			printf("Can not access /dev/DeskPi_FAN which links to /dev/ttyUSB0, please check it out.\n");
-			printf("Check /etc/udev/rules.d/10-deskpi.rules file");
+			printf("Can not access /dev/ttyUSB0, please check it out.\n");
  			}
 
 	struct termios tty;
@@ -58,7 +55,7 @@ int main(void){
 	cfsetospeed(&tty, B9600);
 
 	if (tcsetattr(serial_port, TCSANOW, &tty) !=0){
-		printf("Please check out /boot/firmware/config.txt file\n");
+		printf("Please check out /boot/config.txt file\n");
 	}
 
 	char data[10];

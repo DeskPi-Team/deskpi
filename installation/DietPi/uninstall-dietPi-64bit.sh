@@ -3,8 +3,8 @@
 # uninstall Fit for raspiOS-arm-64bit-lite-buster
 
 # Define systemd service name
-fanDaemon="/lib/systemd/system/deskpi.service"
-pwrCutOffDaemon="/lib/systemd/system/deskpi-cut-off-power.service"
+fanDaemon="/etc/systemd/system/deskpi.service"
+pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
 
 # initializing functions
 if [ -e /lib/lsb/init-functions ]; then
@@ -18,24 +18,20 @@ if [ -d /tmp/deskpi ]; then
 fi
 
 if [ -f $fanDaemon ]; then
-  sudo systemctl stop deskpi.service
-  sudo systemctl disable deskpi.service
+  systemctl stop deskpi.service
+  systemctl disable deskpi.service
   rm -f $fanDaemon
 fi
 
 if [ -f $pwrCutOffDaemon ]; then
-  sudo systemctl disable deskpi-cut-off-power.service
-  rm -f $pwrCutOffDaemon
-fi
-
-if [ -e $pwrCutOffDaemon ]; then
   systemctl disable deskpi-cut-off-power.service
+  rm -f $pwrCutOffDaemon
 fi
 
 # delete pwmfancontrol64 and safecutoffpower64 execute binary file.
 if [ -e /usr/bin/pwmFanControl64 ]; then
         rm -f /usr/bin/pwmFanControl64
-        rm -f /usr/bin/safecutoffpower64
+        rm -f /usr/bin/safeCutOffPower64
 fi
 
 # Greetings
