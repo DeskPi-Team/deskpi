@@ -13,11 +13,11 @@ fi
 
 
 # remove old repository.
-if [ -d /tmp/deskpi ]; then
-  rm -rf /tmp/deskpi*
-fi
+# if [ -d /tmp/deskpi ]; then
+#  rm -rf /tmp/deskpi*
+# cd /tmp/ && git clone https://github.com/deskpi-team/deskpi
+# fi
 
-cd /tmp/ && git clone https://github.com/deskpi-team/deskpi
 
 if [[ -f $fanDaemon ]]; then
   sudo sh -c "sudo systemctl stop deskpi.service"
@@ -118,7 +118,7 @@ if [ $? -eq 0 ]; then
   log_action_msg "Congratulations! DeskPi Pro driver has been installed successfully, Have Fun!"
   log_action_msg "System will be reboot in 5 seconds to take effect."
 else
-  log_action_warning "Could not download deskpi repository, please check the internet connection and try to execute it again!"
+  log_action_warning "Could not download deskpi repository, please check the internet connection and try to execute it again. "
   log_action_msg "Usage: sudo ./install-raspios-64bit.sh"
 fi
 
