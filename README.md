@@ -6,7 +6,7 @@ The DeskPi Pro is a hardware kit for converting a standard Raspberry Pi 4 from a
 * Raspberry Pi OS(32bit) - Deprecated 
 * RaspiOS (64bit) - tested 
 * Ubuntu-mate OS(32bit) - Deprecated 
-* Ubuntu OS (64bit) - on testing (24.04)
+* Ubuntu OS (64bit) - on testing (24.04) - Unsupport anymore. `dtoverlay=dwc2,dr_mode=host` will not work well. 
 * Manjaro OS (32bit) - Deprecated 
 * Manjaro OS (64bit) - tested
 * Kali-linux-arm OS (32bit) - Deprecated
