@@ -29,11 +29,11 @@ if [ $pkgStatus != 'ii' ]; then
 fi
 
 # check if dwc2 dtoverlay has been enabled.
-checkResult=`grep dwc2 /boot/firmware/config.txt`
+checkResult=`grep dwc2 /boot/config.txt`
 if [ $? -ne 0 ];  then
-  log_warning_msg "Adding dtoverlay=dwc2,dr_mode=host to /boot/firmware/config.txt file."
-  sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt
-  sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt
+  log_warning_msg "Adding dtoverlay=dwc2,dr_mode=host to /boot/config.txt file."
+  sed -i '/dtoverlay=dwc2*/d' /boot/config.txt
+  sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/config.txt
   log_action_msg "check dwc2 overlay will be enabled after rebooting."
 fi
 
@@ -42,6 +42,8 @@ fanDaemon="/etc/systemd/system/deskpi.service"
 pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
 
 # copy pre-compiled binary file to /usr/bin/ folder
+cd /tmp/
+git clone https://github.com/deskpi-team/deskpi.git 
 if [ -d /tmp/deskpi/ ]; then
         cp -Rvf /tmp/deskpi/installation/drivers/c/pwmFanControl64 /usr/bin/pwmFanControl64
         cp -Rvf /tmp/deskpi/installation/drivers/c/safeCutOffPower64 /usr/bin/safeCutOffPower64
