@@ -42,6 +42,7 @@ fanDaemon="/etc/systemd/system/deskpi.service"
 pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
 
 # copy pre-compiled binary file to /usr/bin/ folder
+cd /tmp && git clone https://github.com/deskpi-team/deskpi.git || echo "please check your connection or download repository manually, download the repository to /tmp folder."
 if [ -d /tmp/deskpi/ ]; then
         cp -Rvf /tmp/deskpi/installation/drivers/c/pwmFanControl64 /usr/bin/pwmFanControl64
         cp -Rvf /tmp/deskpi/installation/drivers/c/safeCutOffPower64 /usr/bin/safeCutOffPower64
