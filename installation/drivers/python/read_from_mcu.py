@@ -6,6 +6,7 @@ ser = serial.Serial("/dev/ttyUSB0", baudrate=9600, timeout=30)
 while True:
     print("grap data...")
     if ser.isOpen():
+        print("serial is opened")
         data = ser.readline()
         print(data)
 
