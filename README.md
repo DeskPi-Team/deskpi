@@ -6,6 +6,9 @@ The DeskPi Pro is a hardware kit for converting a standard Raspberry Pi 4 from a
 
 [Youtube video](https://youtu.be/eaXC5O3amfA)
 
+## Pre_installed image download URL:
+* GOOGLE Drive share linke: [DeskPi_PRO_Preinstalled_RaspberryPi_OS_Bookworm_64bit_img](https://drive.google.com/file/d/1OBY8g-3uRAPx2LAaGksvA-XAfwpPw7OU/view?usp=sharing)
+
 ## Currently tested operating systems that can support Deskpi scripts
 * Raspberry Pi OS(32bit) - Deprecated 
 * RaspiOS (64bit) - tested 
