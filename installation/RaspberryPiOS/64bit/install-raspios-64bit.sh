@@ -45,11 +45,11 @@ pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
 cd /tmp/ && git clone https://github.com/DeskPi-Team/deskpi && echo "Download repository to /tmp finished.." || echo "please download repository to /tmp manually"
 
 if [ -d /tmp/deskpi/ ]; then
-        cp -Rvf /tmp/deskpi/installation/drivers/c/pwmFanControl64 /usr/bin/pwmFanControl64
-        cp -Rvf /tmp/deskpi/installation/drivers/c/safeCutOffPower64 /usr/bin/safeCutOffPower64
+        cp -Rvf /tmp/deskpi/installation/drivers/c/pwmFanControl64V2 /usr/bin/pwmFanControl64V2
+        # cp -Rvf /tmp/deskpi/installation/drivers/c/safeCutOffPower64 /usr/bin/safeCutOffPower64
         cp -Rvf /tmp/deskpi/installation/deskpi-config  /usr/bin/deskpi-config
-        chmod +x /usr/bin/pwmFanControl64
-        chmod +x /usr/bin/safeCutOffPower64
+        chmod +x /usr/bin/pwmFanControl64V2
+        #chmod +x /usr/bin/safeCutOffPower64
         chmod +x /usr/bin/deskpi-config
 fi
 
@@ -61,25 +61,25 @@ echo "After=multi-user.target" >> $fanDaemon
 echo "[Service]" >> $fanDaemon
 echo "Type=simple" >> $fanDaemon
 echo "RemainAfterExit=true" >> $fanDaemon
-echo "ExecStart=/usr/bin/pwmFanControl64 &" >> $fanDaemon
+echo "ExecStart=/usr/bin/pwmFanControl64V2 &" >> $fanDaemon
 echo "[Install]" >> $fanDaemon
 echo "WantedBy=multi-user.target" >> $fanDaemon
 fi
 
 # send signal to MCU before system shutting down.
-if [ ! -e $pwrCutOffDaemon ]; then
-  echo "[Unit]" >> $pwrCutOffDaemon
-  echo "Description=DeskPi-cut-off-power service" >> $pwrCutOffDaemon
-  echo "Conflicts=reboot.target" >> $pwrCutOffDaemon
-  echo "Before=halt.target shutdown.target poweroff.target" >> $pwrCutOffDaemon
-  echo "DefaultDependencies=no" >> $pwrCutOffDaemon
-  echo "[Service]" >> $pwrCutOffDaemon
-  echo "Type=oneshot" >> $pwrCutOffDaemon
-  echo "ExecStart=/usr/bin/safeCutOffPower64 &" >> $pwrCutOffDaemon
-  echo "RemainAfterExit=yes" >> $pwrCutOffDaemon
-  echo "[Install]" >> $pwrCutOffDaemon
-  echo "WantedBy=halt.target shutdown.target poweroff.target" >> $pwrCutOffDaemon
-fi
+#if [ ! -e $pwrCutOffDaemon ]; then
+#  echo "[Unit]" >> $pwrCutOffDaemon
+#  echo "Description=DeskPi-cut-off-power service" >> $pwrCutOffDaemon
+#  echo "Conflicts=reboot.target" >> $pwrCutOffDaemon
+#  echo "Before=halt.target shutdown.target poweroff.target" >> $pwrCutOffDaemon
+#  echo "DefaultDependencies=no" >> $pwrCutOffDaemon
+#  echo "[Service]" >> $pwrCutOffDaemon
+#  echo "Type=oneshot" >> $pwrCutOffDaemon
+#  echo "ExecStart=/usr/bin/safeCutOffPower64 &" >> $pwrCutOffDaemon
+#  echo "RemainAfterExit=yes" >> $pwrCutOffDaemon
+#  echo "[Install]" >> $pwrCutOffDaemon
+#  echo "WantedBy=halt.target shutdown.target poweroff.target" >> $pwrCutOffDaemon
+#fi
 
 # grant privilleges to root user.
 if [ -e $fanDaemon ]; then
@@ -91,11 +91,11 @@ if [ -e $fanDaemon ]; then
   systemctl start deskpi.service &
 fi
 
-if [ -e $pwrCutOffDaemon ]; then
-  chown root:root $pwrCutOffDaemon
-  chmod 755 $pwrCutOffDaemon
-  systemctl enable deskpi-cut-off-power.service
-fi
+# if [ -e $pwrCutOffDaemon ]; then
+#   chown root:root $pwrCutOffDaemon
+#   chmod 755 $pwrCutOffDaemon
+#   systemctl enable deskpi-cut-off-power.service
+# fi
 
 
 # Greetings
