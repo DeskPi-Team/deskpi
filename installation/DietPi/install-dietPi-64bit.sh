@@ -7,8 +7,6 @@ if [ -e /lib/lsb/init-functions ]; then
   log_action_msg "Initializing functions..."
 fi
 
-
-# remove old daemon file
 if [[ -f $fanDaemon ]]; then
   systemctl stop deskpi.service
   systemctl disable deskpi.service
@@ -40,18 +38,6 @@ fi
 # Define systemd service name
 fanDaemon="/etc/systemd/system/deskpi.service"
 pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
-
-# copy pre-compiled binary file to /usr/bin/ folder
-cd /tmp/
-git clone https://github.com/deskpi-team/deskpi.git 
-if [ -d /tmp/deskpi/ ]; then
-        cp -Rvf /tmp/deskpi/installation/drivers/c/pwmFanControl64 /usr/bin/pwmFanControl64
-        cp -Rvf /tmp/deskpi/installation/drivers/c/safeCutOffPower64 /usr/bin/safeCutOffPower64
-        cp -Rvf /tmp/deskpi/installation/deskpi-config  /usr/bin/deskpi-config
-        chmod +x /usr/bin/pwmFanControl64
-        chmod +x /usr/bin/safeCutOffPower64
-        chmod +x /usr/bin/deskpi-config
-fi
 
 # genreate systemd service file
 if [ ! -e $fanDaemon ]; then
@@ -107,4 +93,4 @@ else
   log_action_msg "Usage: sudo ./install-raspios-64bit.sh"
 fi
 
-# sync && sleep 5 &&  reboot
+sync && sleep 5 &&  reboot

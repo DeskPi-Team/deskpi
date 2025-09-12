@@ -7,8 +7,6 @@ if [ -e /lib/lsb/init-functions ]; then
   log_action_msg "Initializing functions..."
 fi
 
-
-# remove old daemon file
 if [[ -f $fanDaemon ]]; then
   systemctl stop deskpi.service
   systemctl disable deskpi.service
@@ -91,11 +89,11 @@ if [ -e $fanDaemon ]; then
   systemctl start deskpi.service &
 fi
 
-# if [ -e $pwrCutOffDaemon ]; then
-#   chown root:root $pwrCutOffDaemon
-#   chmod 755 $pwrCutOffDaemon
-#   systemctl enable deskpi-cut-off-power.service
-# fi
+ if [ -e $pwrCutOffDaemon ]; then
+   chown root:root $pwrCutOffDaemon
+   chmod 755 $pwrCutOffDaemon
+   systemctl enable deskpi-cut-off-power.service
+ fi
 
 
 # Greetings
