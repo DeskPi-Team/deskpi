@@ -1,43 +1,80 @@
+#!/usr/bin/env bash
+#==============================================================================
+# DeskPi Pro driver uninstaller for RaspiOS-ARM-64-lite (Buster+)
+#==============================================================================
+set -euo pipefail
 
-#!/bin/bash
-# uninstall Fit for raspiOS-arm-64bit-lite-buster
+#############################  User-adjustable vars  ###########################
+SYSTEMD_DIR="/etc/systemd/system"
+FAN_SERVICE="$SYSTEMD_DIR/deskpi.service"
+PWR_SERVICE="$SYSTEMD_DIR/deskpi-cut-off-power.service"
+BIN_DIR="/usr/bin"
+FAN_BIN="pwmFanControl64"          # legacy name used in early packages
+CFG_BIN="deskpi-config"
+AUTO_REBOOT=0
 
-# Define systemd service name
-fanDaemon="/etc/systemd/system/deskpi.service"
-pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
-
-# initializing functions
+##############################  Helper functions  ##############################
 if [ -e /lib/lsb/init-functions ]; then
-  . /lib/lsb/init-functions
-  log_action_msg "Initializing functions..."
+    # shellcheck source=/dev/null
+    . /lib/lsb/init-functions
+else
+    log_action_msg()  { echo "[INFO]  $*"; }
+    log_action_warn() { echo "[WARN]  $*"; }
+fi
+log_info() { log_action_msg "$*"; }
+log_warn() { log_action_warn "$*"; }
+log_die()  { echo "[ERROR] $*" >&2; exit 1; }
+
+##############################  CLI parser  ####################################
+for arg; do
+    case "$arg" in
+        --auto-reboot) AUTO_REBOOT=1 ;;
+        -h|--help)
+            cat <<EOF
+Usage: sudo $0 [OPTIONS]
+OPTIONS:
+  --auto-reboot   Reboot automatically after uninstall
+  -h, --help      Show this help
+EOF
+            exit 0
+            ;;
+        *) log_die "Unknown argument: $arg" ;;
+    esac
+done
+
+##############################  Pre-flight check  ##############################
+[ "$(id -u)" -eq 0 ] || log_die "Run this script as root (sudo)"
+
+##############################  Stop & disable  ################################
+if [ -f "$FAN_SERVICE" ]; then
+    log_info "Stopping and disabling deskpi.service"
+    systemctl stop    deskpi.service 2>/dev/null || true
+    systemctl disable deskpi.service 2>/dev/null || true
+    rm -f "$FAN_SERVICE"
 fi
 
-# remove old repository.
+if [ -f "$PWR_SERVICE" ]; then
+    log_info "Stopping and disabling deskpi-cut-off-power.service"
+    systemctl disable deskpi-cut-off-power.service 2>/dev/null || true
+    rm -f "$PWR_SERVICE"
+fi
+
+##############################  Remove binaries  ###############################
+for bin in "$FAN_BIN" "safeCutOffPower64" "$CFG_BIN" "pwmFanControl64V2"; do
+    [ -f "$BIN_DIR/$bin" ] && rm -f "$BIN_DIR/$bin" && log_info "Removed $BIN_DIR/$bin"
+done
+
+##############################  Clean temp clone  ##############################
 if [ -d /tmp/deskpi ]; then
-  rm -rf /tmp/deskpi*
+    rm -rf /tmp/deskpi
+    log_info "Removed /tmp/deskpi"
 fi
 
-if [ -f $fanDaemon ]; then
-  systemctl stop deskpi.service
-  systemctl disable deskpi.service
-  rm -f $fanDaemon
+##############################  Final message  #################################
+log_info "DeskPi Pro driver has been uninstalled successfully!"
+if [ "$AUTO_REBOOT" -eq 1 ]; then
+    log_warn "System will reboot in 5 seconds..."
+    sync && sleep 5 && reboot
+else
+    log_info "Please reboot manually if you also removed dwc2 overlay manually:  sudo reboot"
 fi
-
-if [ -f $pwrCutOffDaemon ]; then
-  systemctl disable deskpi-cut-off-power.service
-  rm -f $pwrCutOffDaemon
-fi
-
-# delete pwmfancontrol64 and safecutoffpower64 execute binary file.
-if [ -e /usr/bin/pwmFanControl64 ]; then
-        rm -f /usr/bin/pwmFanControl64
-        rm -f /usr/bin/safeCutOffPower64
-fi
-
-# Greetings
-if [ $? -eq 0 ]; then
-  log_action_msg "Congratulations! DeskPi Pro driver has been uninstalled successfully!"
-  log_action_msg "System will be reboot in 5 seconds to take effect."
-fi
-
-sync && sleep 5 &&  reboot
