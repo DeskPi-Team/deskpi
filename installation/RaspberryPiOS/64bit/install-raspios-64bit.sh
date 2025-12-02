@@ -71,13 +71,41 @@ install -m 755 "$TMP_DIR/installation/drivers/c/$FAN_BIN" "$BIN_DIR/$FAN_BIN"
 install -m 755 "$TMP_DIR/installation/$CFG_BIN"           "$BIN_DIR/$CFG_BIN"
 
 #############################  Enable dwc2 overlay  ############################
-if ! grep -q "^dtoverlay=dwc2,dr_mode=host" "$CONFIG_TXT"; then
+#if ! grep -q "^dtoverlay=dwc2,dr_mode=host" "$CONFIG_TXT"; then
+#    log_warn "Enabling dwc2 host overlay"
+#   cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
+#   sed -i '/^dtoverlay=dwc2.*/d' "$CONFIG_TXT"
+#   echo "dtoverlay=dwc2,dr_mode=host" >> "$CONFIG_TXT"
+#fi
+#############################  Enable DWC2 overlay  ############################
+# Skips adding the dwc2 line ONLY if:
+#   - it appears before the first header (global), OR
+#   - it appears in the [all] header.
+if ! awk '
+    /^\[/ {
+        in_section=1
+        if ($0 == "[all]") in_all=1
+        else in_all=0
+    }
+    (!in_section && /^dtoverlay=dwc2,dr_mode=host/) { found=1 }
+    (in_all && /^dtoverlay=dwc2,dr_mode=host/) { found=1 }
+    END { exit !found }
+' "$CONFIG_TXT"
+then
     log_warn "Enabling dwc2 host overlay"
     cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
-    sed -i '/^dtoverlay=dwc2.*/d' "$CONFIG_TXT"
-    echo "dtoverlay=dwc2,dr_mode=host" >> "$CONFIG_TXT"
-fi
 
+    # remove any misplaced or duplicate dwc2 lines
+    sed -i '/^dtoverlay=dwc2.*/d' "$CONFIG_TXT"
+
+    # insert under [all] if the header exists
+    if grep -q "^\[all\]" "$CONFIG_TXT"; then
+        sed -i '/^\[all\]/a dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
+    else
+        # if no [all], append it at the end
+        echo "dtoverlay=dwc2,dr_mode=host" >> "$CONFIG_TXT"
+    fi
+fi
 #############################  Create systemd unit  ############################
 if [ ! -f "$FAN_SERVICE" ]; then
     log_info "Creating $FAN_SERVICE"
