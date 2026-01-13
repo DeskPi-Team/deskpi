@@ -18,14 +18,11 @@ CONFIG_TXT_BKP="${CONFIG_TXT}.$(date +%F-%H-%M-%S).bak"
 AUTO_REBOOT=0
 
 ################################  Helper fns  ##################################
-if [ -e /lib/lsb/init-functions ]; then
-    # shellcheck source=/dev/null
-    . /lib/lsb/init-functions
-else
-    log_action_msg()  { echo "[INFO]  $*"; }
-    log_action_warn() { echo "[WARN]  $*"; }
-    log_action_err()  { echo "[ERROR] $*" >&2; }
-fi
+
+log_action_msg()  { echo "[INFO]  $*"; }
+log_action_warn() { echo "[WARN]  $*"; }
+log_action_err()  { echo "[ERROR] $*" >&2; }
+
 log_info() { log_action_msg "$*"; }
 log_warn() { log_action_warn "$*"; }
 log_die()  { log_action_err "$*"; exit 1; }
