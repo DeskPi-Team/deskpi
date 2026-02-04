@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-. /lib/lsb/init-functions
+# . /lib/lsb/init-functions
 
 daemonname="deskpi"
 tempmonscript=/usr/bin/pmwFanControl
@@ -9,7 +9,7 @@ safeshutdaemon=/lib/systemd/system/$daemonname-safeshut.service
 installationfolder=/home/kali/deskpi
 
 # install wiringPi library.
-log_action_msg "DeskPi Fan control script installation Start." 
+echo  "DeskPi Fan control script installation Start." 
 
 # Create service file on system.
 if [ -e $deskpidaemon ]; then
@@ -21,7 +21,7 @@ sudo sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt
 sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt 
 
 # install PWM fan control daemon.
-log_action_msg "DeskPi main control service loaded."
+echo  "DeskPi main control service loaded."
 cd $installationfolder/installation/drivers/c/ 
 sudo cp -rf $installationfolder/installation/drivers/c/pwmFanControl64 /usr/bin/pwmFanControl64
 sudo cp -rf $installationfolder/installation/drivers/c/safeCutOffPower64  /usr/bin/safeCutOffPower64
@@ -56,23 +56,23 @@ echo "RemainAfterExit=yes" >> $safeshutdaemon
 echo "[Install]" >> $safeshutdaemon
 echo "WantedBy=halt.target shutdown.target poweroff.target" >> $safeshutdaemon
 
-log_action_msg "DeskPi Service configuration finished." 
+echo  "DeskPi Service configuration finished." 
 sudo chown root:root $safeshutdaemon
 sudo chmod 755 $safeshutdaemon
 
 sudo chown root:root $deskpidaemon
 sudo chmod 755 $deskpidaemon
 
-log_action_msg "DeskPi Service Load module." 
+echo  "DeskPi Service Load module." 
 sudo systemctl daemon-reload
 sudo systemctl enable $daemonname.service
 sudo systemctl start $daemonname.service &
 sudo systemctl enable $daemonname-safeshut.service
 
 # Finished 
-log_success_msg "DeskPi PWM Fan Control and Safeshut Service installed successfully." 
+echo "DeskPi PWM Fan Control and Safeshut Service installed successfully." 
 # greetings and require rebooting system to take effect.
-log_action_msg "System will reboot in 5 seconds to take effect." 
+echo  "System will reboot in 5 seconds to take effect." 
 sudo sync
 sleep 5 
 sudo reboot
