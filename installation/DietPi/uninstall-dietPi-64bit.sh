@@ -6,12 +6,6 @@
 fanDaemon="/etc/systemd/system/deskpi.service"
 pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
 
-# initializing functions
-if [ -e /lib/lsb/init-functions ]; then
-  . /lib/lsb/init-functions
-  log_action_msg "Initializing functions..."
-fi
-
 # remove old repository.
 if [ -d /tmp/deskpi ]; then
   rm -rf /tmp/deskpi*
@@ -36,8 +30,8 @@ fi
 
 # Greetings
 if [ $? -eq 0 ]; then
-  log_action_msg "Congratulations! DeskPi Pro driver has been uninstalled successfully!"
-  log_action_msg "System will be reboot in 5 seconds to take effect."
+  echo  "Congratulations! DeskPi Pro driver has been uninstalled successfully!"
+  echo  "System will be reboot in 5 seconds to take effect."
 fi
 
 sync && sleep 5 &&  reboot
