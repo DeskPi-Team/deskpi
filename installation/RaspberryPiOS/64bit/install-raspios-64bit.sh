@@ -18,42 +18,42 @@ CONFIG_TXT_BKP="${CONFIG_TXT}.$(date +%F-%H-%M-%S).bak"
 AUTO_REBOOT=0
 
 ################################  Helper fns  ##################################
-if [ -e /lib/lsb/init-functions ]; then
-    # shellcheck source=/dev/null
-    . /lib/lsb/init-functions
-else
-    log_action_msg()  { echo "[INFO]  $*"; }
-    log_action_warn() { echo "[WARN]  $*"; }
-    log_action_err()  { echo "[ERROR] $*" >&2; }
-fi
-log_info() { log_action_msg "$*"; }
-log_warn() { log_action_warn "$*"; }
-log_die()  { log_action_err "$*"; exit 1; }
+# if [ -e /lib/lsb/init-functions ]; then
+#     # shellcheck source=/dev/null
+#     . /lib/lsb/init-functions
+# else
+#     log_action_msg()  { echo "[INFO]  $*"; }
+#     log_action_warn() { echo "[WARN]  $*"; }
+#     log_action_err()  { echo "[ERROR] $*" >&2; }
+# fi
+# log_info() { log_action_msg "$*"; }
+# log_warn() { log_action_warn "$*"; }
+# log_die()  { log_action_err "$*"; exit 1; }
 
 ################################  CLI parser  ##################################
-for arg; do
-    case "$arg" in
-        --auto-reboot) AUTO_REBOOT=1 ;;
-        -h|--help)
-            cat <<EOF
-Usage: sudo $0 [OPTIONS]
-OPTIONS:
-  --auto-reboot   Reboot automatically after installation
-  -h, --help      Show this help
-EOF
-            exit 0
-            ;;
-        *) log_die "Unknown argument: $arg" ;;
-    esac
-done
+# for arg; do
+#     case "$arg" in
+#         --auto-reboot) AUTO_REBOOT=1 ;;
+#         -h|--help)
+#             cat <<EOF
+# Usage: sudo $0 [OPTIONS]
+# OPTIONS:
+#   --auto-reboot   Reboot automatically after installation
+#   -h, --help      Show this help
+# EOF
+#             exit 0
+#             ;;
+#         *) log_die "Unknown argument: $arg" ;;
+#     esac
+# done
 
 #############################  Pre-flight checks  ##############################
 [ "$(id -u)" -eq 0 ] || log_die "Run this script as root (sudo)"
 
 if ! command -v git >/dev/null; then
-    log_info "git not found, installing..."
+    echo "git not found, installing..."
     apt-get update -qq >/dev/null
-    apt-get install -y git-core >/dev/null || log_die "Failed to install git"
+    apt-get install -y git-core >/dev/null || echo "Failed to install git"
 fi
 
 #############################  Stop & clean old units  #########################
@@ -63,10 +63,10 @@ rm -f "$FAN_SERVICE"
 
 #############################  Clone repo  #####################################
 [ -d "$TMP_DIR" ] && rm -rf "$TMP_DIR"
-git clone --depth 1 "$REPO_URL" "$TMP_DIR" || log_die "Clone failed"
+git clone --depth 1 "$REPO_URL" "$TMP_DIR" || echo "Clone failed"
 
 #############################  Install binaries  ###############################
-log_info "Installing binaries to $BIN_DIR"
+echo "Installing binaries to $BIN_DIR"
 install -m 755 "$TMP_DIR/installation/drivers/c/$FAN_BIN" "$BIN_DIR/$FAN_BIN"
 install -m 755 "$TMP_DIR/installation/$CFG_BIN"           "$BIN_DIR/$CFG_BIN"
 
@@ -92,7 +92,7 @@ if ! awk '
     END { exit !found }
 ' "$CONFIG_TXT"
 then
-    log_warn "Enabling dwc2 host overlay"
+    echo "Enabling dwc2 host overlay"
     cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
 
     # remove any misplaced or duplicate dwc2 lines
@@ -108,7 +108,7 @@ then
 fi
 #############################  Create systemd unit  ############################
 if [ ! -f "$FAN_SERVICE" ]; then
-    log_info "Creating $FAN_SERVICE"
+    echo "Creating $FAN_SERVICE"
     cat > "$FAN_SERVICE" <<'EOF'
 [Unit]
 Description=DeskPi Fan Control Service
@@ -130,10 +130,10 @@ systemctl daemon-reload
 systemctl enable --now deskpi.service || log_warn "Failed to start deskpi.service"
 
 #############################  Final message  ##################################
-log_info "DeskPi Pro driver installed successfully!"
+echo "DeskPi Pro driver installed successfully!"
 if [ "$AUTO_REBOOT" -eq 1 ]; then
-    log_warn "System will reboot in 5 seconds..."
+    echo "System will reboot in 5 seconds..."
     sync && sleep 5 && reboot
 else
-    log_info "Please reboot manually to apply dwc2 overlay:  sudo reboot"
+    echo "Please reboot manually to apply dwc2 overlay:  sudo reboot"
 fi
