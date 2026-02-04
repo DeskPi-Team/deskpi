@@ -2,10 +2,10 @@
 # Fit for ubuntu 64bit
 
 # initializing functions
-if [ -e /lib/lsb/init-functions ]; then
-  . /lib/lsb/init-functions
-  log_action_msg "Initializing functions..."
-fi
+# if [ -e /lib/lsb/init-functions ]; then
+#   . /lib/lsb/init-functions
+#   echo  "Initializing functions..."
+# fi
 
 
 # remove old daemon file
@@ -31,10 +31,10 @@ fi
 # check if dwc2 dtoverlay has been enabled.
 checkResult=`grep dwc2 /boot/firmware/config.txt`
 if [ $? -ne 0 ];  then
-  log_warning_msg "Adding dtoverlay=dwc2,dr_mode=host to /boot/firmware/config.txt file."
+  echo "Adding dtoverlay=dwc2,dr_mode=host to /boot/firmware/config.txt file."
   sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt
   sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt
-  log_action_msg "check dwc2 overlay will be enabled after rebooting."
+  echo "check dwc2 overlay will be enabled after rebooting."
 fi
 
 # Define systemd service name
@@ -84,7 +84,7 @@ fi
 if [ -e $fanDaemon ]; then
   chown root:root $fanDaemon
   chmod 755 $fanDaemon
-  log_action_msg "Load DeskPi service and load modules"
+  echo "Load DeskPi service and load modules"
   systemctl daemon-reload
   systemctl enable deskpi.service
   systemctl start deskpi.service &
@@ -99,11 +99,11 @@ fi
 
 # Greetings
 if [ $? -eq 0 ]; then
-  log_action_msg "Congratulations! DeskPi Pro driver has been installed successfully, Have Fun!"
-  log_action_msg "System will be reboot in 5 seconds to take effect."
+  echo "Congratulations! DeskPi Pro driver has been installed successfully, Have Fun!"
+  echo  "System will be reboot in 5 seconds to take effect."
 else
-  log_action_warning "Could not download deskpi repository, please check the internet connection and try to execute it again. "
-  log_action_msg "Usage: sudo ./install-ubuntu-64.sh"
+  echo "Could not download deskpi repository, please check the internet connection and try to execute it again. "
+  echo  "Usage: sudo ./install-ubuntu-64.sh"
 fi
 
 sync && sleep 5 &&  reboot
