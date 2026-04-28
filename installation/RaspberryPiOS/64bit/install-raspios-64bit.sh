@@ -135,7 +135,7 @@ fi
 #############################  Create systemd unit  ############################
 if [ ! -f "$FAN_SERVICE" ]; then
     echo "Creating $FAN_SERVICE"
-    cat > "$FAN_SERVICE" <<'EOF'
+    cat > "$FAN_SERVICE" <<EOF
 [Unit]
 Description=DeskPi Fan Control Service
 After=multi-user.target
@@ -143,7 +143,7 @@ After=multi-user.target
 [Service]
 Type=simple
 RemainAfterExit=true
-ExecStart=/usr/bin/pwmFanControl64V2
+ExecStart=$BIN_DIR/$FAN_BIN
 Restart=on-failure
 
 [Install]
