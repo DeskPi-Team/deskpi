@@ -1,1 +1,5 @@
 .git
+
+installation/drivers/c/pwmFanControl64
+installation/drivers/c/pwmFanControl64V2
+installation/drivers/c/safeCutOffPower64
