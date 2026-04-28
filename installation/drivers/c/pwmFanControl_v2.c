@@ -80,7 +80,7 @@ static void check_poweroff(void)
     ssize_t n = read(serial_fd, buf, sizeof(buf)-1);
     if (n > 0) {
         if (strstr(buf, "poweroff") || strstr(buf, "power_off"))
-            system("sync && init 0");
+            system("sync && systemctl poweroff");
     }
 }
 
