@@ -6,8 +6,8 @@
 set -euo pipefail
 
 #############################  User-adjustable vars  ###########################
-REPO_URL="https://github.com/DeskPi-Team/deskpi"
-TMP_DIR="/tmp/deskpi"
+# REPO_URL="https://github.com/DeskPi-Team/deskpi"  # No longer needed - building locally
+# TMP_DIR="/tmp/deskpi"                              # No longer needed - building locally
 BIN_DIR="/usr/bin"
 SYSTEMD_DIR="/etc/systemd/system"
 FAN_BIN="pwmFanControl64V2"
@@ -48,12 +48,21 @@ AUTO_REBOOT=0
 # done
 
 #############################  Pre-flight checks  ##############################
-[ "$(id -u)" -eq 0 ] || log_die "Run this script as root (sudo)"
+if [ "$(id -u)" -ne 0 ]; then
+    echo "ERROR: Run this script as root (sudo)" >&2
+    exit 1
+fi
 
-if ! command -v git >/dev/null; then
-    echo "git not found, installing..."
+if ! command -v gcc >/dev/null; then
+    echo "gcc not found, installing..."
     apt-get update -qq >/dev/null
-    apt-get install -y git-core >/dev/null || echo "Failed to install git"
+    apt-get install -y build-essential >/dev/null || echo "Failed to install build-essential"
+fi
+
+if ! command -v make >/dev/null; then
+    echo "make not found, installing..."
+    apt-get update -qq >/dev/null
+    apt-get install -y build-essential >/dev/null || echo "Failed to install build-essential"
 fi
 
 #############################  Stop & clean old units  #########################
@@ -61,14 +70,31 @@ systemctl stop    deskpi.service 2>/dev/null || true
 systemctl disable deskpi.service 2>/dev/null || true
 rm -f "$FAN_SERVICE"
 
-#############################  Clone repo  #####################################
-[ -d "$TMP_DIR" ] && rm -rf "$TMP_DIR"
-git clone --depth 1 "$REPO_URL" "$TMP_DIR" || echo "Clone failed"
+#############################  Build binaries  ###################################
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+SOURCE_DIR="$SCRIPT_DIR/../../drivers/c"
+CONFIG_DIR="$SCRIPT_DIR/../.."
+
+echo "Building binaries in $SOURCE_DIR"
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "ERROR: Source directory not found at $SOURCE_DIR"
+    exit 1
+fi
+
+# Build the binaries using make
+cd "$SOURCE_DIR"
+echo "Running make clean..."
+make clean
+echo "Running make all..."
+if ! make all; then
+    echo "ERROR: Failed to build binaries"
+    exit 1
+fi
 
 #############################  Install binaries  ###############################
 echo "Installing binaries to $BIN_DIR"
-install -m 755 "$TMP_DIR/installation/drivers/c/$FAN_BIN" "$BIN_DIR/$FAN_BIN"
-install -m 755 "$TMP_DIR/installation/$CFG_BIN"           "$BIN_DIR/$CFG_BIN"
+install -m 755 "$SOURCE_DIR/$FAN_BIN"  "$BIN_DIR/$FAN_BIN"
+install -m 755 "$CONFIG_DIR/$CFG_BIN"  "$BIN_DIR/$CFG_BIN"
 
 #############################  Enable dwc2 overlay  ############################
 #if ! grep -q "^dtoverlay=dwc2,dr_mode=host" "$CONFIG_TXT"; then
@@ -109,7 +135,7 @@ fi
 #############################  Create systemd unit  ############################
 if [ ! -f "$FAN_SERVICE" ]; then
     echo "Creating $FAN_SERVICE"
-    cat > "$FAN_SERVICE" <<'EOF'
+    cat > "$FAN_SERVICE" <<EOF
 [Unit]
 Description=DeskPi Fan Control Service
 After=multi-user.target
@@ -117,7 +143,7 @@ After=multi-user.target
 [Service]
 Type=simple
 RemainAfterExit=true
-ExecStart=/usr/bin/pwmFanControl64V2
+ExecStart=$BIN_DIR/$FAN_BIN
 Restart=on-failure
 
 [Install]
