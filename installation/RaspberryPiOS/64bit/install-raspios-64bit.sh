@@ -97,39 +97,36 @@ install -m 755 "$SOURCE_DIR/$FAN_BIN"  "$BIN_DIR/$FAN_BIN"
 install -m 755 "$CONFIG_DIR/$CFG_BIN"  "$BIN_DIR/$CFG_BIN"
 
 #############################  Enable dwc2 overlay  ############################
-#if ! grep -q "^dtoverlay=dwc2,dr_mode=host" "$CONFIG_TXT"; then
-#    log_warn "Enabling dwc2 host overlay"
-#   cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
-#   sed -i '/^dtoverlay=dwc2.*/d' "$CONFIG_TXT"
-#   echo "dtoverlay=dwc2,dr_mode=host" >> "$CONFIG_TXT"
-#fi
-#############################  Enable DWC2 overlay  ############################
-# Skips adding the dwc2 line ONLY if:
-#   - it appears before the first header (global), OR
-#   - it appears in the [all] header.
+# IMPORTANT: The dwc2 overlay MUST live in the GLOBAL section of config.txt
+# (i.e. BEFORE the first [pi4]/[cm4]/[all]/... conditional header).
+# Some firmware revisions silently skip overlays placed under conditional
+# filters, leaving the DeskPi Pro's internal CH340 (fan MCU) unenumerated.
+# Symptom: /dev/ttyUSB0 missing, `lsusb` shows no 1a86:7523, vclog shows
+# only `vc4-kms-v3d` loaded but no `dwc2`.
+DWC2_LINE='dtoverlay=dwc2,dr_mode=host'
+
+# Skip only if dwc2 already exists in the global section (before any [header]).
 if ! awk '
-    /^\[/ {
-        in_section=1
-        if ($0 == "[all]") in_all=1
-        else in_all=0
-    }
-    (!in_section && /^dtoverlay=dwc2,dr_mode=host/) { found=1 }
-    (in_all && /^dtoverlay=dwc2,dr_mode=host/) { found=1 }
+    BEGIN { in_header = 0 }
+    /^\[/ { in_header = 1 }
+    !in_header && /^dtoverlay=dwc2/ { found = 1 }
     END { exit !found }
-' "$CONFIG_TXT"
-then
-    echo "Enabling dwc2 host overlay"
+' "$CONFIG_TXT"; then
+    echo "Enabling dwc2 host overlay in GLOBAL section of $CONFIG_TXT"
     cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
 
-    # remove any misplaced or duplicate dwc2 lines
-    sed -i '/^dtoverlay=dwc2.*/d' "$CONFIG_TXT"
+    # Remove any existing dwc2 line(s) anywhere in the file (de-dup + clean).
+    sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
 
-    # insert under [all] if the header exists
-    if grep -q "^\[all\]" "$CONFIG_TXT"; then
-        sed -i '/^\[all\]/a dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
+    # Insert the line BEFORE the first [header]. If no header exists, prepend.
+    if grep -q '^\[' "$CONFIG_TXT"; then
+        awk -v line="$DWC2_LINE" '
+            BEGIN { inserted = 0 }
+            !inserted && /^\[/ { print line; inserted = 1 }
+            { print }
+        ' "$CONFIG_TXT" > "$CONFIG_TXT.tmp" && mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
     else
-        # if no [all], append it at the end
-        echo "dtoverlay=dwc2,dr_mode=host" >> "$CONFIG_TXT"
+        sed -i "1i\\$DWC2_LINE" "$CONFIG_TXT"
     fi
 fi
 #############################  Create systemd unit  ############################

@@ -17,8 +17,21 @@ if [ -e $deskpidaemon ]; then
 fi
 
 # adding dtoverlay to enable dwc2 on host mode.
-sudo sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt 
-sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt 
+# IMPORTANT: The overlay MUST be in the GLOBAL section of config.txt (before
+# any [xxx] conditional header). Some firmware revisions silently skip overlays
+# placed under conditional filters.
+CONFIG_TXT=/boot/firmware/config.txt
+sudo cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)"
+sudo sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
+if sudo grep -q '^\[' "$CONFIG_TXT"; then
+    sudo awk -v line='dtoverlay=dwc2,dr_mode=host' '
+        BEGIN { inserted = 0 }
+        !inserted && /^\[/ { print line; inserted = 1 }
+        { print }
+    ' "$CONFIG_TXT" | sudo tee "$CONFIG_TXT.tmp" >/dev/null && sudo mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
+else
+    sudo sed -i '1i\dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
+fi
 
 # install PWM fan control daemon.
 echo  "DeskPi main control service loaded."

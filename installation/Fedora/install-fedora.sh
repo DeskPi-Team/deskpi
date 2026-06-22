@@ -28,11 +28,26 @@ if [ -e $deskpidaemon ]; then
 fi
 
 # adding dtoverlay to enable dwc2 on host mode.
-echo "Enable dwc2 on Host Mode"
-sudo sed -i '/dtoverlay=dwc2*/d' /boot/efi/config.txt
-sudo sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/efi/config.txt 
-if [ $? -eq 0 ]; then
-   log_success_msg "dwc2 has been setting up successfully"
+# IMPORTANT: The dwc2 overlay MUST live in the GLOBAL section of config.txt
+# (i.e. BEFORE the first [pi4]/[cm4]/[all]/... conditional header). Some
+# firmware revisions silently skip overlays placed under conditional filters.
+CONFIG_TXT=/boot/efi/config.txt
+echo "Enable dwc2 on Host Mode (global section of $CONFIG_TXT)"
+if [ -f "$CONFIG_TXT" ]; then
+    sudo cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)"
+    sudo sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
+    if sudo grep -q '^\[' "$CONFIG_TXT"; then
+        sudo awk -v line='dtoverlay=dwc2,dr_mode=host' '
+            BEGIN { inserted = 0 }
+            !inserted && /^\[/ { print line; inserted = 1 }
+            { print }
+        ' "$CONFIG_TXT" | sudo tee "$CONFIG_TXT.tmp" >/dev/null && sudo mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
+    else
+        sudo sed -i '1i\dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
+    fi
+    log_success_msg "dwc2 has been setting up successfully"
+else
+    log_warning_msg "$CONFIG_TXT not found, skipping dwc2 overlay setup"
 fi
 
 # install PWM fan control daemon.

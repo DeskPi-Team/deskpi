@@ -25,10 +25,24 @@ echo ""
 
 echo "---------------- DeskPi service configuration ----------------" 
 # Boot config
+# IMPORTANT: The dtoverlay line MUST be in the GLOBAL section of config.txt
+# (before any [xxx] conditional header). Some firmware revisions silently skip
+# overlays placed under conditional filters. We use awk to insert before the
+# first header, falling back to prepend if no header exists.
 sudo touch /etc/modprobe.d/raspberry.conf
 sudo sh -c "echo dwc2 > /etc/modprobe.d/raspberry.conf"
-sudo sh -c "echo '# Deskpi Pro USB configuration' >> /boot/config.txt"
-sudo sh -c "echo 'dtoverlay=dwc2,dr_mode=host' >> /boot/config.txt"
+CONFIG_TXT=/boot/config.txt
+sudo cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)"
+sudo sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
+if sudo grep -q '^\[' "$CONFIG_TXT"; then
+    sudo awk -v line='dtoverlay=dwc2,dr_mode=host' '
+        BEGIN { inserted = 0 }
+        !inserted && /^\[/ { print line; inserted = 1 }
+        { print }
+    ' "$CONFIG_TXT" | sudo tee "$CONFIG_TXT.tmp" >/dev/null && sudo mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
+else
+    sudo sed -i '1i\dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
+fi
 
 # Commands copy
 sudo cp $deskPiDir/deskpi/drivers/c/fanStop  /usr/bin/deskpiFanStop

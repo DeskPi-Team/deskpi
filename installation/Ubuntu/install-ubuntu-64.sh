@@ -28,13 +28,30 @@ if [ $pkgStatus != 'ii' ]; then
   apt-get -y install git-core 
 fi
 
-# check if dwc2 dtoverlay has been enabled.
-checkResult=`grep dwc2 /boot/firmware/config.txt`
-if [ $? -ne 0 ];  then
-  echo "Adding dtoverlay=dwc2,dr_mode=host to /boot/firmware/config.txt file."
-  sed -i '/dtoverlay=dwc2*/d' /boot/firmware/config.txt
-  sed -i '$a\dtoverlay=dwc2,dr_mode=host' /boot/firmware/config.txt
-  echo "check dwc2 overlay will be enabled after rebooting."
+# check if dwc2 dtoverlay has been enabled in the GLOBAL section.
+# IMPORTANT: The overlay MUST be in the global section (before any [xxx]
+# conditional header). Some firmware revisions silently skip overlays placed
+# under conditional filters, leaving the DeskPi Pro internal CH340 invisible.
+CONFIG_TXT=/boot/firmware/config.txt
+if ! awk '
+    BEGIN { in_header = 0 }
+    /^\[/ { in_header = 1 }
+    !in_header && /^dtoverlay=dwc2/ { found = 1 }
+    END { exit !found }
+' "$CONFIG_TXT" 2>/dev/null; then
+  echo "Adding dtoverlay=dwc2,dr_mode=host to GLOBAL section of $CONFIG_TXT."
+  cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)" 2>/dev/null || sudo cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)"
+  sudo sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
+  if sudo grep -q '^\[' "$CONFIG_TXT"; then
+    sudo awk -v line='dtoverlay=dwc2,dr_mode=host' '
+        BEGIN { inserted = 0 }
+        !inserted && /^\[/ { print line; inserted = 1 }
+        { print }
+    ' "$CONFIG_TXT" | sudo tee "$CONFIG_TXT.tmp" >/dev/null && sudo mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
+  else
+    sudo sed -i '1i\dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
+  fi
+  echo "dwc2 overlay will be enabled after rebooting."
 fi
 
 # Define systemd service name
