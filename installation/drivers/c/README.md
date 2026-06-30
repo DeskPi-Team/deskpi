@@ -109,28 +109,78 @@ Use `sudo deskpi-config` to interactively edit the curve; option 6
 launches the wizard, option 7 deletes `/etc/deskpi.conf` so the
 daemon falls back to the built-in defaults.
 
-## The 5 V cut-off flow
+## The 5 V cut-off flow — redundant signalling
 
-When the OS shuts down, three things happen in order:
+The MCU only knows it should cut the 5 V rail once it sees the
+9-byte literal `power_off` on `/dev/ttyUSB0`. There is no
+acknowledgement protocol — fire-and-forget. To make sure the
+message actually reaches the MCU no matter how the OS is being shut
+down, the signalling runs on **two independent paths**:
 
-1. The kernel reaches `poweroff.target`.
-2. systemd starts `deskpi-cut-off-power.service` (a `Type=oneshot`
-   unit; `Conflicts=reboot.target` so it does not run on plain
-   reboots).
-3. The unit's `ExecStart` runs `deskpi-shutdown-helper`, which:
-   - writes a `BEGIN power_off pid=$$ triggered_by=…` line to
-     `/var/log/deskpi-shutdown.log`,
-   - invokes `safeCutOffPower64` (which writes the `power_off` token
-     to the MCU),
-   - if `safeCutOffPower64` exited 0, sleeps for
-     `DESKPI_CUT_OFF_HOLD_SECONDS` (default 18) to keep the kernel
-     from returning from `systemctl poweroff` before the MCU has had
-     time to cut the 5 V rail,
-   - writes an `END power_off … rc=$?` line to the log.
+### Path A — `pwmFanControl_v2.c::check_poweroff` (PRIMARY)
 
-The MCU receives the `power_off` token, waits ~15 s, then
-disconnects the 5 V rail. The SoC loses power and the held helper
-process is torn down by the hardware.
+The daemon watches the serial port in its 1-second loop. The moment
+it reads the literal `poweroff` or `power_off` token from the MCU
+(the front-panel double-click), it:
+
+1. Calls `send_power_off()` to write `power_off` to the MCU three
+   times with `tcdrain()` between each. This reuses the already-open
+   serial fd, so no race for the port against the systemd helper.
+2. Then runs `sync && systemctl poweroff`.
+
+This is the primary path because it fires **seconds before**
+`poweroff.target` is reached — the system is still fully alive, the
+tty driver has not been torn down, and the MCU has the full
+shutdown window to react.
+
+### Path B — `deskpi-cut-off-power.service` (BACKUP)
+
+For shutdowns that did not originate from the front-panel power
+button (`sudo poweroff` over SSH, unattended apt upgrade, kernel
+panic followed by orderly reboot-to-halt, etc.), `pwmFanControl64V2`
+is never triggered. The systemd `Type=oneshot` service at
+`poweroff.target` covers those cases.
+
+`safeCutOffPower64` opens `/dev/ttyUSB0`, sets the line to raw 9600
+8N1, no flow control, then writes `power_off` five times with
+`tcdrain()` + `tcflush()` between each attempt. After the writes it
+returns 0 only if at least one copy made it out.
+
+The helper script (`/usr/bin/deskpi-shutdown-helper`) wraps the
+binary:
+
+- `BEGIN power_off pid=$$ triggered_by=deskpi-cut-off-power.service` is logged.
+- `safeCutOffPower64` runs (~500 ms with the redundancy inside).
+- on success, sleeps `DESKPI_CUT_OFF_HOLD_SECONDS` (default 18) so
+  the kernel cannot return from `systemctl poweroff` before the MCU
+  has cut 5 V.
+- `END power_off … rc=$?` is logged.
+
+### Why both?
+
+The two paths exist so that:
+
+| Shutdown cause | Path that fires |
+|---|---|
+| Double-click front power button | **A + B** — daemon acks immediately, service re-acks at `poweroff.target` |
+| `sudo poweroff` over SSH | B only |
+| unattended apt upgrade | B only |
+| Kernel panic → orderly halt | B only |
+| daemon crashes before the user presses the button | B only |
+
+In the worst case (`pwmFanControl64V2` is dead for some reason),
+the user still gets a 5 V cut within ~15 s of `poweroff.target`
+because path B is independent.
+
+### Line discipline — why it matters
+
+`safeCutOffPower64` MUST set 9600 8N1 with no hardware flow control.
+The DeskPi Pro's CH340 runs at 9600 8N1 and does not assert CTS,
+so any stray `CRTSCTS` bit will make the kernel `write()` block
+forever waiting for a CTS pulse that never arrives. The daemon
+already has the port set up correctly at startup; the helper binary
+re-asserts the same settings every time it opens the port.
+
 
 ## File history
 

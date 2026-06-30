@@ -6,6 +6,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **5 V cut-off signalling was unreliable — the MCU did not always
+  receive `power_off`.** Two related bugs:
+  1. `safeCutOffPower.c` set the wrong line discipline. The
+     `&= ~FLAG; |= FLAG;` no-op pairs left `PARENB`, `CSTOPB` and
+     `CRTSCTS` *set*, configuring the UART as 8E2 with hardware
+     flow control. The CH340 is 8N1 and does not assert CTS, so
+     `write()` could block on CTS forever. Replaced with a clean
+     `tcgetattr` / `tcsetattr` block: 9600 8N1, no hw flow,
+     raw mode, no OPOST.
+  2. Only **one** `write()` of the 9-byte token was issued. If it
+     raced the fan daemon's pwm_* token, both bytes could be lost.
+     The binary now writes `power_off` **5 times** with `tcdrain()`
+     and `tcflush(TCIOFLUSH)` between each, ensuring every copy
+     actually leaves the UART shift register.
+
+  Redundancy now also spans the host:
+  - **PRIMARY** (`pwmFanControl_v2.c::check_poweroff`): the moment
+    the daemon reads `poweroff` / `power_off` from the MCU, it
+    writes the cut-off token to the MCU *before* calling
+    `systemctl poweroff`. The MCU sees the signal seconds before
+    the kernel begins tearing down drivers, so the 15 s internal
+    delay comfortably precedes any halts.
+  - **BACKUP** (`safeCutOffPower64` via `deskpi-cut-off-power.service`):
+    re-fires the same token at `poweroff.target` for shutdowns
+    that did not originate from the front-panel power button
+    (SSH, apt, kernel panic). The 18 s `sleep` in
+    `deskpi-shutdown-helper` keeps the poweroff.target chain
+    pinned until the MCU reacts.
+
+  Fix verified on a Raspberry Pi 4B running Debian 13: a double-click
+  of the front power button now cuts the 5 V rail within ~15 s
+  and the SoC powers off (previously the OS would halt while 5 V
+  stayed hot).
+
 ### Changed
 - **All distros now use the V2 fan daemon (`pwmFanControl64V2`).**
   The Ubuntu / DietPi / Kali / Manjaro / Fedora installers previously

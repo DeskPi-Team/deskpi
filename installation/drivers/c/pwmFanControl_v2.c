@@ -74,14 +74,41 @@ static void load_conf(unsigned int cfg[8])
     fclose(fp);
 }
 
+/* ---------------- send cut-off command (primary path) ----------------
+   The MCU only knows it should cut 5 V once it sees the 9-byte
+   "power_off" token on the wire. The deskpi-cut-off-power.service
+   re-sends the same token at poweroff.target as a BACKUP, but it
+   races the kernel teardown — better to ack the MCU NOW, while the
+   system is still fully alive and we have many seconds of margin.
+   ----------------------------------------------------------------- */
+static void send_power_off(void)
+{
+    static const char data[] = "power_off";
+    const size_t len = sizeof(data) - 1;   /* 9 bytes, no NUL */
+    for (int i = 0; i < 3; i++) {
+        tcflush(serial_fd, TCIOFLUSH);
+        ssize_t n = write(serial_fd, data, len);
+        if (n == (ssize_t)len) {
+            tcdrain(serial_fd);   /* block until UART shift reg is empty */
+        }
+        usleep(100000);          /* 100 ms */
+    }
+    tcflush(serial_fd, TCIOFLUSH);
+}
+
 /* ---------------- shutdown command detection ---------------- */
 static void check_poweroff(void)
 {
     char buf[64] = {0};
     ssize_t n = read(serial_fd, buf, sizeof(buf)-1);
     if (n > 0) {
-        if (strstr(buf, "poweroff") || strstr(buf, "power_off"))
+        if (strstr(buf, "poweroff") || strstr(buf, "power_off")) {
+            /* PRIMARY: ack the MCU immediately, BEFORE asking the
+             * kernel to start shutting down. The systemd unit at
+             * poweroff.target will re-send the same token as a backup. */
+            send_power_off();
             system("sync && systemctl poweroff");
+        }
     }
 }
 
