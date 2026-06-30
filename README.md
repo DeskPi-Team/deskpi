@@ -15,10 +15,6 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history. Highlights:
   `pwmFanControl64` build/install target have been removed. Every
   supported distro now gets the same daemon, the same `/etc/deskpi.conf`
   curve, and the same power-button → 5 V cut-off behavior.
-  [Unreleased] — 所有发行版升级到 V2 守护进程。Ubuntu / DietPi / Kali
-  / Manjaro / Fedora 此前装的是遗留版 `pwmFanControl64`，现在统一用
-  `pwmFanControl64V2`。V1 源码与 `pwmFanControl64` 构建/安装 target
-  已删除。
 - **[Unreleased] — `deskpi-config` manual levels (1-5) now stop the
   daemon.** Previously the running daemon overwrote the manual PWM
   token within ~1 s, contradicting the FAQ ("To pin the fan at a
@@ -28,15 +24,12 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history. Highlights:
   (`installation/deskpi-config` and
   `installation/drivers/deskpi-config`) have been re-unified after
   drifting apart.
-  [Unreleased] — `deskpi-config` 选项 1-5 现在会停止守护进程。
 - **[Unreleased] — Gentler default fan curve.** The C default array in
   `pwmFanControl_v2.c` was `{40,75, 50,75, 65,100, 75,100}`, sending
   the fan to 75 % from 40 °C upward — loud and contrary to the FAQ
   statement "the fan stops automatically". Changed to
   `{40,25, 50,50, 65,75, 75,100}` so the fan is off below 40 °C and
   ramps up smoothly: 25 % → 50 % → 75 % → 100 % at 40 / 50 / 65 / 75 °C.
-  [Unreleased] — 默认曲线更安静。`pwmFanControl_v2.c` 默认数组改成
-  `{40,25, 50,50, 65,75, 75,100}`。
 - **2026-06-22 — 5 V cutoff on shutdown fixed.** The Raspberry Pi OS installer now deploys `deskpi-cut-off-power.service` and ships a one-shot `safeCutOffPower64` binary, so double-pressing the front power button triggers `systemctl poweroff` *and* tells the DeskPi Pro MCU to cut the 5 V rail ~15 s later. `safeCutOffPower.c` was also rewritten to remove a `while(1)` busy loop that previously caused `Type=oneshot` services to wait out `TimeoutStartSec`. All other distro installers (Ubuntu / DietPi / Kali / Manjaro / Fedora) have been brought in line with the same canonical layout, and all uninstallers are hardened to clean up the new artifacts.
 - **2026-06-22 — Unified installer / uninstaller.** `installation/install.sh` and `installation/uninstall.sh` now auto-detect the running OS, print a summary, and ask for confirmation before doing anything. They dispatch to the matching per-distro script. Both accept `--help`, `--dry-run`, `--yes`, and `--os=<distro>` to override detection.
 - **2026-06-22 — `deskpi-config` rewritten** with a portable ASCII banner, ANSI colors (auto-disabled when not on a TTY), `printf`-based serial writes, and input validation. Both copies in the tree are now identical.
@@ -47,7 +40,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history. Highlights:
 ```
 deskpi/
 ├── README.md              this file
-├── CHANGELOG.md           version history (English + 中文)
+├── CHANGELOG.md           version history
 ├── FAQ.md                 frequently-asked questions
 ├── LICENSE                GPLv3
 ├── installation/          per-distro install / uninstall scripts

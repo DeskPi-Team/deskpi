@@ -7,14 +7,14 @@ In order to better obtain the performance of the SSD drive, you can update the f
 3.  1 x DeskPi Pro V3 Daughter board 
 4.  1 x DeskPi Disk FW Flash Tool Pack  
 ## Firmware update Method:
-1. Use USB-A to USB-A Cable（2.0 or 3.0）connect the disk
+1. Use USB-A to USB-A Cable(2.0 or 3.0)connect the disk
 board to PC, or connect the plug directly to PC
 ![Alt text](./imgs/1620793222164.png)
 ![Alt text](./imgs/1620793228963.png)
 ![Alt text](./imgs/1620793236773.png)
 2. Unpack DeskPI Disk FW Flash Tool, and double click `Tool.exe`
 ![Alt text](./imgs/1620793295993.png)
-3. Confirm the board has been found, click Start button. Wait for a moment。
+3. Confirm the board has been found, click Start button. Wait for a moment.
 ![Alt text](./imgs/1620793338437.png)
 When the progress bar is 100%, you can unplug the DeskPi Pro Daughter board and install the Raspberry Pi on the DeskPi Pro.
 ![Alt text](./imgs/1620793358996.png)

@@ -1,13 +1,10 @@
-# Installation / 安装说明
+# Installation
 
-## Quick start / 快速开始
+## Quick start
 
 The simplest entry point is the **unified installer** at the top of this
 directory. It auto-detects your OS, prints a summary, and asks for
 confirmation before doing anything.
-
-最简单的入口是本目录顶层的 **unified installer**。它会自动检测你的
-操作系统，打印摘要，并在执行任何操作前要求你确认。
 
 ```bash
 sudo ./install.sh
@@ -19,30 +16,22 @@ detection.
 
 > 32-bit systems are no longer supported. Use a 64-bit OS to get the
 > full performance of the Raspberry Pi 4.
->
-> 32 位系统已不再支持，请使用 64 位操作系统以充分发挥 Raspberry Pi 4
-> 的性能。
 
 > The official Raspberry Pi OS image receives the most testing and is
 > recommended for most users.
->
-> 对于大多数用户，推荐使用官方 Raspberry Pi OS 镜像（测试最充分）。
 
 If you prefer the per-distro scripts, you can still run them directly
 (see "Per-distro scripts" below), but the unified installer is now the
 canonical entry point.
 
-## What gets installed / 安装内容
+## What gets installed
 
 Every per-distro installer deploys the same two systemd units and the same
 three binaries, so the user-visible behavior is identical regardless of
 which OS you pick.
 
-每个发行版的安装脚本都会部署同样两个 systemd unit 和同样三个二进制，
-所以无论你装在哪个系统上，用户感知到的行为是一致的。
-
-| Component / 组件 | Path | Role |
-|------------------|------|------|
+| Component | Path | Role |
+|-----------|------|------|
 | `pwmFanControl64V2` | `/usr/bin/pwmFanControl64V2` | Fan daemon. Reads CPU temperature, sends `pwm_NNN` to the MCU. Also listens for `poweroff` from the MCU and calls `systemctl poweroff`. |
 | `safeCutOffPower64` | `/usr/bin/safeCutOffPower64` | One-shot helper. Writes 9 bytes of `power_off` to the MCU so it cuts the 5 V rail ~15 s later. |
 | `deskpi-config` | `/usr/bin/deskpi-config` | Interactive fan-speed configurator (the TUI you get with `sudo deskpi-config`). |
@@ -53,12 +42,8 @@ which OS you pick.
 > If `systemctl list-unit-files` shows `deskpi.service` but not
 > `deskpi-cut-off-power.service`, the OS will halt but the 5 V rail will
 > stay hot. Re-run the installer to fix that.
->
-> 如果 `systemctl list-unit-files` 里只看到 `deskpi.service` 而没有
-> `deskpi-cut-off-power.service`，系统会 halt 但 5V 不会断。重跑一遍
-> 对应发行版的安装脚本就能修好。
 
-## Per-distro scripts / 各发行版脚本
+## Per-distro scripts
 
 These are still available for users who want to call a specific
 installer directly. The unified installer dispatches to the matching
@@ -116,11 +101,9 @@ Each per-distro script accepts `--auto-reboot` and `--help`.
     └── uninstall-ubuntu-mate.sh
 ```
 
-## Get Support / 获取支持
+## Get Support
 
 If you have any trouble on using our product, please kindly send E-mail to: **support@deskpi.com**
-
-如果你在使用过程中遇到任何问题，欢迎发邮件到： **support@deskpi.com**
 
 For the change history of this repository (including the 2026-06-22 5 V
 cutoff fix and the unified installer), see [CHANGELOG.md](../CHANGELOG.md)

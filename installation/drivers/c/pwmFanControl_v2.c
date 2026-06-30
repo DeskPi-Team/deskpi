@@ -10,11 +10,11 @@
 
 #define SERIAL_DEV  "/dev/ttyUSB0"
 #define CONF_FILE   "/etc/deskpi.conf"
-#define PERCENTAGE  10          /* 温度回差百分比 */
+#define PERCENTAGE  10          /* hysteresis band, in percent */
 
 static int serial_fd = -1;
 
-/* ---------------- 串口初始化 ---------------- */
+/* ---------------- serial port init ---------------- */
 static int serial_init(const char *dev)
 {
     int fd = open(dev, O_RDWR | O_NOCTTY | O_SYNC);
@@ -35,14 +35,14 @@ static int serial_init(const char *dev)
     return fd;
 }
 
-/* ---------------- 串口发送 ---------------- */
+/* ---------------- serial port send ---------------- */
 static void serial_send(const char *buf, size_t len)
 {
     if (serial_fd >= 0)
         write(serial_fd, buf, len);
 }
 
-/* ---------------- 读取 CPU 温度 ---------------- */
+/* ---------------- read CPU temperature ---------------- */
 static unsigned int cpu_temp_get(void)
 {
     FILE *fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r");
@@ -53,14 +53,14 @@ static unsigned int cpu_temp_get(void)
     return t / 1000;
 }
 
-/* ---------------- 解析配置文件 ----------------
-   每行一个数字，共 8 行，依次为：
-   1.temp1 2.pwm1 3.temp2 4.pwm2 … 8.pwm4
+/* ---------------- parse config file ----------------
+   One integer per line, 8 lines total, in order:
+   1.temp1  2.pwm1  3.temp2  4.pwm2  ...  8.pwm4
 ------------------------------------------------*/
 static void load_conf(unsigned int cfg[8])
 {
-    /* 缺省值 — gentler curve, matches the deskpi-config UI:
-       temp≤40 → 0 (off),  40→25,  50→50,  65→75,  ≥75→100. */
+    /* Default values — gentler curve, matches the deskpi-config UI:
+       temp<=40 -> 0 (off),  40->25,  50->50,  65->75,  >=75->100. */
     unsigned int def[8] = {40,25, 50,50, 65,75, 75,100};
     memcpy(cfg, def, sizeof(def));
 
@@ -74,7 +74,7 @@ static void load_conf(unsigned int cfg[8])
     fclose(fp);
 }
 
-/* ---------------- 关机命令检测 ---------------- */
+/* ---------------- shutdown command detection ---------------- */
 static void check_poweroff(void)
 {
     char buf[64] = {0};
@@ -85,7 +85,7 @@ static void check_poweroff(void)
     }
 }
 
-/* ---------------- 主循环 ---------------- */
+/* ---------------- main loop ---------------- */
 int main(void)
 {
     unsigned int conf[8];
@@ -115,9 +115,10 @@ int main(void)
                 serial_send(pwm_cmd, 8);
             }
 
-            if (pwm) last_temp = temp;      /* 记录触发温度 */
+            if (pwm) last_temp = temp;      /* record the temperature that triggered this level */
         } else {
-            /* 回差保护：低于阈值才允许降档 */
+            /* hysteresis: only step down once the temperature has dropped
+               by PERCENTAGE% below the last trigger point */
             unsigned int min_temp = last_temp - last_temp * PERCENTAGE / 100;
             if (temp < min_temp)
                 last_temp = 0;
