@@ -1,109 +1,169 @@
-#!/bin/bash
-# Thanks for Mixcraftio's help, you saved me.
-# orginal url: https://github.com/Mixcraftio/deskpi
-# Variables
-deskPiDir=/home/$USER
-fanstop=/tmp/deskpi/deskpiFanStop.service
-fancontrol=/tmp/deskpi/deskpiFanControl.service
+#!/usr/bin/env bash
+#==============================================================================
+# DeskPi Pro fan-driver installer for Manjaro ARM-64
+# https://github.com/DeskPi-Team/deskpi
+#==============================================================================
+set -euo pipefail
 
-# Temp dir
-mkdir /tmp/deskpi
-touch /tmp/deskpi/deskpiFanStop.service
-touch /tmp/deskpi/deskpiFanControl.service
+#############################  User-adjustable vars  ###########################
+BIN_DIR="/usr/bin"
+SYSTEMD_DIR="/etc/systemd/system"
+FAN_BIN="pwmFanControl64V2"
+SAFE_CUTOFF_BIN="safeCutOffPower64"
+CFG_BIN="deskpi-config"
+FAN_SERVICE="$SYSTEMD_DIR/deskpi.service"
+PWR_CUTOFF_SERVICE="$SYSTEMD_DIR/deskpi-cut-off-power.service"
+CONFIG_TXT="/boot/config.txt"
+[ -f /boot/firmware/config.txt ] && CONFIG_TXT="/boot/firmware/config.txt"
+CONFIG_TXT_BKP="${CONFIG_TXT}.$(date +%F-%H-%M-%S).bak"
+AUTO_REBOOT=0
 
-echo "================= DeskPi driver installation ================="
+################################  CLI parser  ##################################
+for arg; do
+    case "$arg" in
+        --auto-reboot) AUTO_REBOOT=1 ;;
+        -h|--help)
+            cat <<EOF
+Usage: sudo $0 [OPTIONS]
+OPTIONS:
+  --auto-reboot   Reboot automatically after installation
+  -h, --help      Show this help
+EOF
+            exit 0
+            ;;
+        *) echo "Unknown argument: $arg" >&2; exit 1 ;;
+    esac
+done
 
-echo ""
-
-echo "---------------------- DeskPi compiling ----------------------"
-yes | sudo pacman -S gcc
-gcc $deskPiDir/deskpi/drivers/c/pwmControlFan.c -o $deskPiDir/deskpi/drivers/c/pwmFanControl
-gcc $deskPiDir/deskpi/drivers/c/fanStop.c -o $deskPiDir/deskpi/drivers/c/fanStop
-echo "------------------ DeskPi compiling finished -----------------"
-
-echo ""
-
-echo "---------------- DeskPi service configuration ----------------" 
-# Boot config
-# IMPORTANT: The dtoverlay line MUST be in the GLOBAL section of config.txt
-# (before any [xxx] conditional header). Some firmware revisions silently skip
-# overlays placed under conditional filters. We use awk to insert before the
-# first header, falling back to prepend if no header exists.
-sudo touch /etc/modprobe.d/raspberry.conf
-sudo sh -c "echo dwc2 > /etc/modprobe.d/raspberry.conf"
-CONFIG_TXT=/boot/config.txt
-sudo cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)"
-sudo sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
-if sudo grep -q '^\[' "$CONFIG_TXT"; then
-    sudo awk -v line='dtoverlay=dwc2,dr_mode=host' '
-        BEGIN { inserted = 0 }
-        !inserted && /^\[/ { print line; inserted = 1 }
-        { print }
-    ' "$CONFIG_TXT" | sudo tee "$CONFIG_TXT.tmp" >/dev/null && sudo mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
-else
-    sudo sed -i '1i\dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
+#############################  Pre-flight checks  ##############################
+if [ "$(id -u)" -ne 0 ]; then
+    echo "ERROR: Run this script as root (sudo)" >&2
+    exit 1
 fi
 
-# Commands copy
-sudo cp $deskPiDir/deskpi/drivers/c/fanStop  /usr/bin/deskpiFanStop
-sudo chmod 755 /usr/bin/deskpiFanStop
-sudo cp $deskPiDir/deskpi/drivers/c/pwmFanControl /usr/bin/deskpiFanControl
-sudo chmod 755 /usr/bin/deskpiFanControl
+if ! command -v gcc >/dev/null; then
+    pacman -Sy --noconfirm gcc make
+fi
 
-# Safe shutdown service
-sudo echo "[Unit]" > $fanstop
-sudo echo "Description=DeskPi Safe Cut-off Power Service" >> $fanstop
-sudo echo "Conflicts=reboot.target" >> $fanstop
-sudo echo "DefaultDependencies=no" >> $fanstop
-sudo echo "" >> $fanstop
-sudo echo "[Service]" >> $fanstop
-sudo echo "Type=oneshot" >> $fanstop
-sudo echo "ExecStart=/usr/bin/sudo /usr/bin/deskpiFanStop" >> $fanstop
-sudo echo "RemainAfterExit=yes" >> $fanstop
-sudo echo "TimeoutStartSec=15" >> $fanstop
-sudo echo "" >> $fanstop
-sudo echo "[Install]" >> $fanstop
-sudo echo "WantedBy=halt.target shutdown.target poweroff.target final.target" >> $fanstop
+if ! command -v git >/dev/null; then
+    pacman -Sy --noconfirm git
+fi
 
-# Fan control service
-sudo echo "[Unit]" > $fancontrol
-sudo echo "Description=DeskPi PWM Control Fan Service" >> $fancontrol
-sudo echo "After=multi-user.target" >> $fancontrol
-sudo echo "" >> $fancontrol
-sudo echo "[Service]" >> $fancontrol
-sudo echo "Type=simple" >> $fancontrol
-sudo echo "RemainAfterExit=no" >> $fancontrol
-sudo echo "ExecStart=/usr/bin/sudo /usr/bin/deskpiFanControl" >> $fancontrol
-sudo echo "" >> $fancontrol
-sudo echo "[Install]" >> $fancontrol
-sudo echo "WantedBy=multi-user.target" >> $fancontrol
+#############################  Stop & clean old units  #########################
+systemctl stop    deskpi.service 2>/dev/null || true
+systemctl disable deskpi.service 2>/dev/null || true
+rm -f "$FAN_SERVICE"
+systemctl stop    deskpi-cut-off-power.service 2>/dev/null || true
+systemctl disable deskpi-cut-off-power.service 2>/dev/null || true
+rm -f "$PWR_CUTOFF_SERVICE"
 
-sudo touch /lib/systemd/system/deskpiFanStop.service
-sudo touch /lib/systemd/system/deskpiFanControl.service
+#############################  Source the upstream repository  ################
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+SOURCE_DIR="$SCRIPT_DIR/../../drivers/c"
+CONFIG_DIR="$SCRIPT_DIR/../.."
 
-sudo mv /tmp/deskpi/deskpiFanStop.service /lib/systemd/system/deskpiFanStop.service
-sudo mv /tmp/deskpi/deskpiFanControl.service /lib/systemd/system/deskpiFanControl.service
-sudo rm -rf /tmp/deskpi
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "Cloning upstream repository (local source not found)..."
+    rm -rf /tmp/deskpi
+    git clone https://github.com/DeskPi-Team/deskpi.git /tmp/deskpi || {
+        echo "ERROR: Failed to clone repository. Check your internet connection." >&2
+        exit 1
+    }
+    SOURCE_DIR="/tmp/deskpi/installation/drivers/c"
+    CONFIG_DIR="/tmp/deskpi/installation"
+fi
 
-# Permissions
-sudo chown root:root /lib/systemd/system/deskpiFanStop.service
-sudo chmod 644 /lib/systemd/system/deskpiFanStop.service
-sudo chown root:root /lib/systemd/system/deskpiFanControl.service
-sudo chmod 644 /lib/systemd/system/deskpiFanControl.service
-echo "------------ DeskPi service configuration finished ------------" 
+#############################  Build binaries  #################################
+echo "Building binaries in $SOURCE_DIR"
+cd "$SOURCE_DIR"
+make clean
+make
 
-echo ""
+#############################  Install binaries  ###############################
+echo "Installing binaries to $BIN_DIR"
+install -m 755 "$SOURCE_DIR/$FAN_BIN"        "$BIN_DIR/$FAN_BIN"
+install -m 755 "$SOURCE_DIR/$SAFE_CUTOFF_BIN"        "$BIN_DIR/$SAFE_CUTOFF_BIN"
+install -m 755 "$CONFIG_DIR/deskpi-shutdown-helper"   "$BIN_DIR/deskpi-shutdown-helper"
+install -m 755 "$CONFIG_DIR/$CFG_BIN"        "$BIN_DIR/$CFG_BIN"
 
-echo "------------- DeskPi service initialisation start -------------" 
-sudo systemctl daemon-reload
-sudo systemctl start deskpiFanControl.service
-sudo systemctl enable deskpiFanControl.service
-sudo systemctl enable deskpiFanStop.service
-echo "------------ DeskPi service initialisation finished -----------"
+#############################  Enable dwc2 overlay  ############################
+# IMPORTANT: The dwc2 overlay MUST live in the GLOBAL section of config.txt
+# (i.e. BEFORE the first [pi4]/[cm4]/[all]/... conditional header).
+DWC2_LINE='dtoverlay=dwc2,dr_mode=host'
+if ! awk '
+    BEGIN { in_header = 0 }
+    /^\[/ { in_header = 1 }
+    !in_header && /^dtoverlay=dwc2/ { found = 1 }
+    END { exit !found }
+' "$CONFIG_TXT" 2>/dev/null; then
+    echo "Enabling dwc2 host overlay in GLOBAL section of $CONFIG_TXT"
+    cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
+    sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
+    if grep -q '^\[' "$CONFIG_TXT"; then
+        awk -v line="$DWC2_LINE" '
+            BEGIN { inserted = 0 }
+            !inserted && /^\[/ { print line; inserted = 1 }
+            { print }
+        ' "$CONFIG_TXT" > "$CONFIG_TXT.tmp" && mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
+    else
+        sed -i "1i\\$DWC2_LINE" "$CONFIG_TXT"
+    fi
+fi
 
-echo ""
+#############################  Create systemd unit: fan  #######################
+if [ ! -f "$FAN_SERVICE" ]; then
+    echo "Creating $FAN_SERVICE"
+    cat > "$FAN_SERVICE" <<EOF
+[Unit]
+Description=DeskPi Fan Control Service
+After=multi-user.target
 
-sync
-echo "DeskPi Driver installation successful, system will reboot in 10 seconds to take effect!"
-sleep 10
-sudo reboot
+[Service]
+Type=simple
+RemainAfterExit=true
+ExecStart=$BIN_DIR/$FAN_BIN
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+fi
+
+#############################  Create systemd unit: cut-off-power  ############
+# Runs at poweroff.target, writes "power_off" to the MCU so it cuts the
+# 5 V rail ~15 s later. Skipped on reboot via Conflicts=reboot.target.
+if [ ! -f "$PWR_CUTOFF_SERVICE" ]; then
+    echo "Creating $PWR_CUTOFF_SERVICE"
+    cat > "$PWR_CUTOFF_SERVICE" <<'DESKPIPOWER_EOF'
+[Unit]
+Description=DeskPi-cut-off-power service
+Conflicts=reboot.target
+Before=halt.target shutdown.target poweroff.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+# Logging is done by the helper itself (systemd's $?/$rc parsing can't capture the binary's exit code).
+ExecStart={BINDIR}/deskpi-shutdown-helper
+# (Post hook removed: rc and PID are logged inside the helper, see above.)
+RemainAfterExit=yes
+
+[Install]
+WantedBy=halt.target shutdown.target poweroff.target
+DESKPIPOWER_EOF
+    sed -i -e "s|{BINDIR}|$BIN_DIR|g" -e "s|{SAFECUTOFFBIN}|$SAFE_CUTOFF_BIN|g" "$PWR_CUTOFF_SERVICE"
+fi
+
+#############################  Reload & start  #################################
+systemctl daemon-reload
+systemctl enable --now deskpi.service               || echo "[WARN] Failed to start deskpi.service"
+systemctl enable    deskpi-cut-off-power.service   || echo "[WARN] Failed to enable deskpi-cut-off-power.service"
+
+#############################  Final message  ##################################
+echo "DeskPi Pro driver installed successfully!"
+if [ "$AUTO_REBOOT" -eq 1 ]; then
+    echo "System will reboot in 5 seconds..."
+    sync && sleep 5 && reboot
+else
+    echo "Please reboot manually to apply dwc2 overlay:  sudo reboot"
+fi

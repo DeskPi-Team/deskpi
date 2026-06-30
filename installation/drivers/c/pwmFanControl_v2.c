@@ -59,8 +59,9 @@ static unsigned int cpu_temp_get(void)
 ------------------------------------------------*/
 static void load_conf(unsigned int cfg[8])
 {
-    /* 缺省值 */
-    unsigned int def[8] = {40,75, 50,75, 65,100, 75,100};
+    /* 缺省值 — gentler curve, matches the deskpi-config UI:
+       temp≤40 → 0 (off),  40→25,  50→50,  65→75,  ≥75→100. */
+    unsigned int def[8] = {40,25, 50,50, 65,75, 75,100};
     memcpy(cfg, def, sizeof(def));
 
     FILE *fp = fopen(CONF_FILE, "r");

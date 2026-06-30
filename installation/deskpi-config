@@ -1,103 +1,241 @@
-#!/bin/bash	
-# This is a fan speed control utility tool for user to customize fan speed.
-# Priciple: send speed argument to the MCU 
-# Technical Part
-# There are four arguments:
-# pwm_025 means sending 25% PWM signal to MCU. The fan will run at 25% speed level. 
-# pwm_050 means sending 50% PWM signal to MCU. The fan will run at 50% speed level.
-# pwm_075 means sending 75% PWM signal to MCU. The fan will run at 75% speed level.
-# pwm_100 means sending 100% PWM signal to MCU.The fan will run at 100% speed level. 
-# 
-. /lib/lsb/init-functions
-# This is the serial port that connect to deskPi mainboard and it will
-# communicate with Raspberry Pi and get the signal for fan speed adjusting.
-serial_port='/dev/ttyUSB0'
+#!/usr/bin/env bash
+#==============================================================================
+# deskpi-config — interactive fan-speed configuration utility for DeskPi Pro
+# https://github.com/DeskPi-Team/deskpi
+#
+# Talks to the DeskPi Pro daughter-board MCU over /dev/ttyUSB0 (a CH340
+# enumerated by the dwc2 host-mode overlay) using short, fixed tokens:
+#
+#   pwm_000  fan off
+#   pwm_025  fan at 25 %
+#   pwm_050  fan at 50 %
+#   pwm_075  fan at 75 %
+#   pwm_100  fan at 100 %
+#
+# The companion pwmFanControl daemon reads CPU temperature and writes the
+# correct token automatically; this tool is for manual override and for
+# adjusting the temperature→PWM curve.
+#
+# Picking a manual speed (options 1-5) stops the daemon so the override
+# sticks. Option 7 starts the daemon again with the built-in defaults.
+# Option 6 writes a custom temperature→PWM curve to /etc/deskpi.conf.
+#==============================================================================
+set -euo pipefail
 
-# Stop deskpi.service so that user can define the speed level.
-sudo systemctl stop deskpi.service
-sudo systemctl daemon-reload
+SERIAL_PORT="/dev/ttyUSB0"
+FAN_SERVICE="deskpi.service"
+CONF_FILE="/etc/deskpi.conf"
 
-# Define the function of set_config 
-function set_config() {
-	if [ -e /etc/deskpi.conf ]; then
-		sudo sh -c "rm -f /etc/deskpi.conf" 
-	fi
-	sudo sh -c "sudo touch /etc/deskpi.conf"
-	sudo sh -c "sudo chmod 777 /etc/deskpi.conf"
-	echo "Under normal circumstances, we recommend four gears. The
-	following requires you to control the fan's operating status according to
-	the temperature and speed defined by yourself, and you need to input 4
-	different temperature thresholds (for example: 42, 50, 60, 70) , And 4 PWM
-	values of different speeds parameters(for example 25, 50, 75, 100, this is the default
-	value),you can define the speed level during 0-100." 
-	for i in `seq 1 4`;
-	do 
-	echo -e "\e[32;40mCurrent CPU Temperature:\e[0m \e[31;40m`vcgencmd measure_temp`\e[0m\n"
-	read -p  "Temperature_threshold_$i:" temp 
-        read -p  "Fan_Speed level_$i:" fan_speed_level
-	sudo sh -c "echo $temp" >> /etc/deskpi.conf  
-	sudo sh -c "echo $fan_speed_level" >> /etc/deskpi.conf  
-	done 
-	echo "Configuration file has been created on /etc/deskpi.conf"
+# ---- pretty-print helpers -------------------------------------------------
+if [ -t 1 ] && command -v tput >/dev/null && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
+    C_RESET=$'\e[0m'
+    C_BOLD=$'\e[1m'
+    C_DIM=$'\e[2m'
+    C_RED=$'\e[31m'
+    C_GREEN=$'\e[32m'
+    C_YELLOW=$'\e[33m'
+    C_BLUE=$'\e[34m'
+    C_CYAN=$'\e[36m'
+else
+    C_RESET=""; C_BOLD=""; C_DIM=""
+    C_RED=""; C_GREEN=""; C_YELLOW=""; C_BLUE=""; C_CYAN=""
+fi
+
+say()  { printf '%s==>%s %s\n' "$C_BOLD$C_CYAN" "$C_RESET" "$*"; }
+ok()   { printf '%s[ OK ]%s %s\n' "$C_GREEN"        "$C_RESET" "$*"; }
+warn() { printf '%s[WARN]%s %s\n' "$C_YELLOW"       "$C_RESET" "$*" >&2; }
+fail() { printf '%s[FAIL]%s %s\n' "$C_RED"          "$C_RESET" "$*" >&2; }
+
+banner() {
+    printf '%s' "$C_BOLD$C_BLUE"
+    cat <<'BANNER'
+  ____             _    __        _
+ |  _ \  ___  _ __| |_ / _| ___ | | ___
+ | | | |/ _ \| '__| __| |_ / _ \| |/ _ \
+ | |_| | (_) | |  | |_|  _| (_) | | (_) |
+ |____/ \___/|_|   \__|_|  \___/|_|\___/
+
+BANNER
+    printf '%s' "$C_RESET"
+    printf '   %sFan-speed configuration utility for DeskPi Pro%s\n' "$C_DIM" "$C_RESET"
+    printf '   %sgithub.com/DeskPi-Team/deskpi%s\n\n' "$C_DIM" "$C_RESET"
 }
 
-# Greetings and information for user.
-#
-echo "DESKPI PRO FAN CONTROL" | figlet -c 
-echo "Please select speed level that you want: "
-echo "It will always run at the speed level that you choosed."
-echo "---------------------------------------------------------------"
-echo "1 - set fan speed level to 25%"
-echo "2 - set fan speed level to 50%"
-echo "3 - set fan speed level to 75%"
-echo "4 - set fan speed level to 100%"
-echo "5 - Turn off Fan"
-echo "6 - Adjust the start speed level according to the temperature"
-echo "7 - Cancel manual control and enable automatical fan control"
-echo "---------------------------------------------------------------"
-echo "Just input the number and press enter."
-read -p "Your choice:" levelNumber
-case $levelNumber in
-	1) 
-	   echo "You've select 25% speed level"
-	   sudo sh -c "echo pwm_025 > $serial_port"
-	   echo "Fan speed level has been change to 25%"
-	   ;;
-	2) 
-	   echo "You've select 50% speed level"
-	   sudo sh -c "echo pwm_050 > $serial_port"
-	   echo "Fan speed level has been change to 50%"
-	   ;;
-	3) 
-	   echo "You've select 75% speed level"
-	   sudo sh -c "echo pwm_075 > $serial_port"
-	   echo "Fan speed level has been change to 75%"
-	   ;;
-	4) 
-	   echo "You'tve select 100% speed level"
-	   sudo sh -c "echo pwm_100 > $serial_port"
-	   echo "Fan speed level has been change to 100%"
-	   ;;
-	5) 
-	   echo "Turn off fan"
-	   sudo sh -c "echo pwm_000 > $serial_port"
-	   echo "Fan speed level has been turned off."
-	   ;;
-	6) 
-	   echo "Customizing the start speed level according the temperature"
-	   sudo systemctl stop deskpi.service 
-	   sudo systemctl daemon-reload
-	   set_config
-	   sudo systemctl daemon-reload 
-	   sudo systemctl start deskpi.service  
-	   ;;
-	7) 
-	   echo "Cancel manual control and enable automatical fan control"
-	   sudo systemctl daemon-reload
-	   sudo systemctl restart deskpi.service 
-	   ;;
-	*) 
-	   echo "You type the wrong selection, please try again!"
-	   . /usr/bin/deskpi-config
-	   ;;
-esac
+# ---- preflight ------------------------------------------------------------
+if [ "$(id -u)" -ne 0 ]; then
+    warn "deskpi-config is best run with sudo (it needs to start/stop systemd units and write $CONF_FILE)."
+fi
+
+if [ ! -e "$SERIAL_PORT" ]; then
+    fail "$SERIAL_PORT is missing. Is the dwc2 overlay enabled and the DeskPi Pro plugged in?"
+    warn "Try:  sudo raspi-config  -> Interface Options -> Serial Port"
+    warn "And confirm  dtoverlay=dwc2,dr_mode=host  is in /boot/firmware/config.txt"
+    exit 1
+fi
+
+# ---- pwm writer -----------------------------------------------------------
+# Writes the bare token to the UART. echo would add a trailing newline which
+# the MCU does not want — use printf.
+set_pwm() {
+    local token="$1"
+    if ! printf '%s' "$token" > "$SERIAL_PORT" 2>/dev/null; then
+        fail "Failed to write '$token' to $SERIAL_PORT"
+        return 1
+    fi
+    return 0
+}
+
+# ---- daemon helpers -------------------------------------------------------
+fan_daemon_active() {
+    systemctl is-active --quiet "$FAN_SERVICE" 2>/dev/null
+}
+
+stop_daemon() {
+    if fan_daemon_active; then
+        sudo systemctl stop "$FAN_SERVICE" 2>/dev/null || {
+            warn "Failed to stop $FAN_SERVICE — manual override may be overwritten within ~1 s."
+            return 1
+        }
+    fi
+    return 0
+}
+
+start_daemon() {
+    if ! fan_daemon_active; then
+        sudo systemctl start "$FAN_SERVICE" 2>/dev/null || {
+            warn "Failed to start $FAN_SERVICE — check: journalctl -u $FAN_SERVICE"
+            return 1
+        }
+    fi
+    return 0
+}
+
+# ---- current temperature --------------------------------------------------
+current_temp() {
+    if command -v vcgencmd >/dev/null; then
+        vcgencmd measure_temp 2>/dev/null || echo "n/a"
+    else
+        echo "n/a"
+    fi
+}
+
+# ---- temperature→PWM curve wizard ----------------------------------------
+set_curve() {
+    say "Define a 4-step temperature→PWM curve"
+    printf '   %s(defaults: 40/25  50/50  65/75  75/100)%s\n\n' "$C_DIM" "$C_RESET"
+
+    # install(1) truncates and creates with the requested mode in one step.
+    sudo install -m 666 /dev/null "$CONF_FILE"
+
+    local i temp speed
+    for i in 1 2 3 4; do
+        printf '   %sCPU temperature now: %s%s\n' \
+            "$C_DIM" "$(current_temp)" "$C_RESET"
+        while :; do
+            read -r -p "   Temperature threshold #$i (degC, 0-110): " temp
+            [[ "$temp" =~ ^[0-9]+$ ]] || { warn "Please enter a non-negative integer."; continue; }
+            [ "$temp" -le 110 ] || { warn "Out of range (0-110)."; continue; }
+            break
+        done
+        while :; do
+            read -r -p "   Fan speed           #$i (0-100): " speed
+            [[ "$speed" =~ ^[0-9]+$ ]] || { warn "Please enter a non-negative integer."; continue; }
+            [ "$speed" -le 100 ] || { warn "Out of range (0-100)."; continue; }
+            break
+        done
+        printf '%s\n%s\n' "$temp" "$speed" | sudo tee -a "$CONF_FILE" >/dev/null
+        printf '\n'
+    done
+    ok "Wrote $CONF_FILE"
+}
+
+# ---- menu ----------------------------------------------------------------
+menu() {
+    banner
+    printf '%sCurrent status%s\n' "$C_BOLD" "$C_RESET"
+    printf '   CPU temperature : %s\n' "$(current_temp)"
+    if fan_daemon_active; then
+        if [ -e "$CONF_FILE" ]; then
+            printf '   %-17s: %sactive%s (custom curve from %s)\n' \
+                "$FAN_SERVICE" "$C_GREEN" "$C_RESET" "$CONF_FILE"
+        else
+            printf '   %-17s: %sactive%s (built-in defaults 40/25  50/50  65/75  75/100)\n' \
+                "$FAN_SERVICE" "$C_GREEN" "$C_RESET"
+        fi
+    else
+        printf '   %-17s: %sinactive%s (manual mode — fan stays at last PWM written)\n' \
+            "$FAN_SERVICE" "$C_YELLOW" "$C_RESET"
+    fi
+    printf '\n'
+    printf '%sManual fan-speed levels%s\n' "$C_BOLD" "$C_RESET"
+    printf '   1)   25 %%   (pwm_025)\n'
+    printf '   2)   50 %%   (pwm_050)\n'
+    printf '   3)   75 %%   (pwm_075)\n'
+    printf '   4)  100 %%   (pwm_100)\n'
+    printf '   5)  OFF     (pwm_000)\n'
+    printf '\n'
+    printf '%sConfiguration%s\n' "$C_BOLD" "$C_RESET"
+    printf '   6)  Custom temperature→PWM curve\n'
+    printf '   7)  Restore automatic fan control\n'
+    printf '\n'
+    printf '   0)  Quit\n\n'
+}
+
+apply_level() {
+    local pct="$1" token="$2"
+    say "Switching to manual mode (stops $FAN_SERVICE so the override sticks)"
+    stop_daemon || return 0
+    say "Setting fan to ${pct} %%  (writing $token to MCU)"
+    if set_pwm "$token"; then
+        ok "Fan is now at ${pct} %% (manual mode)"
+    fi
+}
+
+# ---- main loop ------------------------------------------------------------
+while :; do
+    menu
+    read -r -p "Your choice: " choice
+    case "${choice:-}" in
+        1) apply_level 25  pwm_025 ;;
+        2) apply_level 50  pwm_050 ;;
+        3) apply_level 75  pwm_075 ;;
+        4) apply_level 100 pwm_100 ;;
+        5) apply_level 0   pwm_000 ;;
+        6)
+            say "Stopping $FAN_SERVICE to write a custom curve"
+            stop_daemon || true
+            set_curve
+            if start_daemon; then
+                ok "Restarted $FAN_SERVICE with the new curve"
+            fi
+            ;;
+        7)
+            say "Restoring automatic fan control"
+            # Drop the custom curve so the daemon falls back to the
+            # built-in default curve defined in pwmFanControl_v2.c.
+            sudo rm -f "$CONF_FILE"
+            if [ -e "$CONF_FILE" ]; then
+                warn "Could not remove $CONF_FILE — check permissions."
+            fi
+            if start_daemon; then
+                ok "$FAN_SERVICE is back in control (built-in default curve)"
+            fi
+            ;;
+        0|q|Q)
+            if ! fan_daemon_active; then
+                warn "$FAN_SERVICE is still stopped. Restart it manually with:"
+                warn "  sudo systemctl start $FAN_SERVICE"
+                warn "(Or it will come back automatically on the next reboot.)"
+            fi
+            printf '\n%sBye.%s\n' "$C_DIM" "$C_RESET"
+            exit 0
+            ;;
+        *)
+            warn "Unknown choice: '$choice'.  Pick a number from the menu (0 to quit)."
+            ;;
+    esac
+    printf '\n'
+    if [ -t 0 ]; then
+        read -r -p "Press <Enter> to return to the menu..." _
+    fi
+done

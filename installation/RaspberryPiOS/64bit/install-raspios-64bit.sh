@@ -11,8 +11,10 @@ set -euo pipefail
 BIN_DIR="/usr/bin"
 SYSTEMD_DIR="/etc/systemd/system"
 FAN_BIN="pwmFanControl64V2"
+SAFE_CUTOFF_BIN="safeCutOffPower64"
 CFG_BIN="deskpi-config"
 FAN_SERVICE="$SYSTEMD_DIR/deskpi.service"
+PWR_CUTOFF_SERVICE="$SYSTEMD_DIR/deskpi-cut-off-power.service"
 CONFIG_TXT="/boot/firmware/config.txt"
 CONFIG_TXT_BKP="${CONFIG_TXT}.$(date +%F-%H-%M-%S).bak"
 AUTO_REBOOT=0
@@ -31,21 +33,21 @@ AUTO_REBOOT=0
 # log_die()  { log_action_err "$*"; exit 1; }
 
 ################################  CLI parser  ##################################
-# for arg; do
-#     case "$arg" in
-#         --auto-reboot) AUTO_REBOOT=1 ;;
-#         -h|--help)
-#             cat <<EOF
-# Usage: sudo $0 [OPTIONS]
-# OPTIONS:
-#   --auto-reboot   Reboot automatically after installation
-#   -h, --help      Show this help
-# EOF
-#             exit 0
-#             ;;
-#         *) log_die "Unknown argument: $arg" ;;
-#     esac
-# done
+for arg; do
+    case "$arg" in
+        --auto-reboot) AUTO_REBOOT=1 ;;
+        -h|--help)
+            cat <<EOF
+Usage: sudo $0 [OPTIONS]
+OPTIONS:
+  --auto-reboot   Reboot automatically after installation
+  -h, --help      Show this help
+EOF
+            exit 0
+            ;;
+        *) echo "Unknown argument: $arg" >&2; exit 1 ;;
+    esac
+done
 
 #############################  Pre-flight checks  ##############################
 if [ "$(id -u)" -ne 0 ]; then
@@ -69,6 +71,9 @@ fi
 systemctl stop    deskpi.service 2>/dev/null || true
 systemctl disable deskpi.service 2>/dev/null || true
 rm -f "$FAN_SERVICE"
+systemctl stop    deskpi-cut-off-power.service 2>/dev/null || true
+systemctl disable deskpi-cut-off-power.service 2>/dev/null || true
+rm -f "$PWR_CUTOFF_SERVICE"
 
 #############################  Build binaries  ###################################
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
@@ -93,8 +98,10 @@ fi
 
 #############################  Install binaries  ###############################
 echo "Installing binaries to $BIN_DIR"
-install -m 755 "$SOURCE_DIR/$FAN_BIN"  "$BIN_DIR/$FAN_BIN"
-install -m 755 "$CONFIG_DIR/$CFG_BIN"  "$BIN_DIR/$CFG_BIN"
+install -m 755 "$SOURCE_DIR/$FAN_BIN"        "$BIN_DIR/$FAN_BIN"
+install -m 755 "$SOURCE_DIR/$SAFE_CUTOFF_BIN"        "$BIN_DIR/$SAFE_CUTOFF_BIN"
+install -m 755 "$CONFIG_DIR/deskpi-shutdown-helper"   "$BIN_DIR/deskpi-shutdown-helper"
+install -m 755 "$CONFIG_DIR/$CFG_BIN"        "$BIN_DIR/$CFG_BIN"
 
 #############################  Enable dwc2 overlay  ############################
 # IMPORTANT: The dwc2 overlay MUST live in the GLOBAL section of config.txt
@@ -148,9 +155,35 @@ WantedBy=multi-user.target
 EOF
 fi
 
+#############################  Create cut-off-power systemd unit  ############
+# Runs at poweroff.target, writes "power_off" to the MCU so it cuts the
+# 5 V rail ~15 s later. Skipped on reboot via Conflicts=reboot.target.
+if [ ! -f "$PWR_CUTOFF_SERVICE" ]; then
+    echo "Creating $PWR_CUTOFF_SERVICE"
+    cat > "$PWR_CUTOFF_SERVICE" <<'DESKPIPOWER_EOF'
+[Unit]
+Description=DeskPi-cut-off-power service
+Conflicts=reboot.target
+Before=halt.target shutdown.target poweroff.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+# Logging is done by the helper itself (systemd's $?/$rc parsing can't capture the binary's exit code).
+ExecStart={BINDIR}/deskpi-shutdown-helper
+# (Post hook removed: rc and PID are logged inside the helper, see above.)
+RemainAfterExit=yes
+
+[Install]
+WantedBy=halt.target shutdown.target poweroff.target
+DESKPIPOWER_EOF
+    sed -i -e "s|{BINDIR}|$BIN_DIR|g" -e "s|{SAFECUTOFFBIN}|$SAFE_CUTOFF_BIN|g" "$PWR_CUTOFF_SERVICE"
+fi
+
 #############################  Reload & start  #################################
 systemctl daemon-reload
-systemctl enable --now deskpi.service || log_warn "Failed to start deskpi.service"
+systemctl enable --now deskpi.service               || echo "[WARN] Failed to start deskpi.service"
+systemctl enable    deskpi-cut-off-power.service   || echo "[WARN] Failed to enable deskpi-cut-off-power.service"
 
 #############################  Final message  ##################################
 echo "DeskPi Pro driver installed successfully!"

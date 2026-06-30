@@ -1,107 +1,173 @@
-#!/bin/bash
-# Fit for raspiOS-arm-64bit-lite-buster
+#!/usr/bin/env bash
+#==============================================================================
+# DeskPi Pro fan-driver installer for DietPi (Raspberry Pi OS Bookworm base)
+# https://github.com/DeskPi-Team/deskpi
+#==============================================================================
+set -euo pipefail
 
-if [[ -f $fanDaemon ]]; then
-  systemctl stop deskpi.service
-  systemctl disable deskpi.service
-  rm -f $fanDaemon
+#############################  User-adjustable vars  ###########################
+BIN_DIR="/usr/bin"
+SYSTEMD_DIR="/etc/systemd/system"
+FAN_BIN="pwmFanControl64V2"
+SAFE_CUTOFF_BIN="safeCutOffPower64"
+CFG_BIN="deskpi-config"
+FAN_SERVICE="$SYSTEMD_DIR/deskpi.service"
+PWR_CUTOFF_SERVICE="$SYSTEMD_DIR/deskpi-cut-off-power.service"
+# DietPi typically uses /boot/config.txt (legacy layout)
+CONFIG_TXT="/boot/config.txt"
+[ -f /boot/firmware/config.txt ] && CONFIG_TXT="/boot/firmware/config.txt"
+CONFIG_TXT_BKP="${CONFIG_TXT}.$(date +%F-%H-%M-%S).bak"
+AUTO_REBOOT=0
+
+################################  CLI parser  ##################################
+for arg; do
+    case "$arg" in
+        --auto-reboot) AUTO_REBOOT=1 ;;
+        -h|--help)
+            cat <<EOF
+Usage: sudo $0 [OPTIONS]
+OPTIONS:
+  --auto-reboot   Reboot automatically after installation
+  -h, --help      Show this help
+EOF
+            exit 0
+            ;;
+        *) echo "Unknown argument: $arg" >&2; exit 1 ;;
+    esac
+done
+
+#############################  Pre-flight checks  ##############################
+if [ "$(id -u)" -ne 0 ]; then
+    echo "ERROR: Run this script as root (sudo)" >&2
+    exit 1
 fi
 
-if [[ -f $pwrCutOffDaemon ]]; then
-  
-  systemctl disable deskpi-cut-off-power.service
-  rm -f $pwrCutOffDaemon
+if ! command -v gcc >/dev/null; then
+    apt-get update -qq >/dev/null
+    apt-get install -y build-essential >/dev/null || echo "[WARN] Failed to install build-essential"
 fi
 
-# install git tool
-pkgStatus=`dpkg-query -l git |grep git | awk '{print $1}'`
-if [ $pkgStatus != 'ii' ]; then
-  apt-get update
-  apt-get -y install git-core 
+if ! command -v git >/dev/null; then
+    apt-get update -qq >/dev/null
+    apt-get install -y git >/dev/null || echo "[WARN] Failed to install git"
 fi
 
-# check if dwc2 dtoverlay has been enabled in the GLOBAL section.
-# IMPORTANT: The overlay MUST be in the global section (before any [xxx]
-# conditional header). Some firmware revisions silently skip overlays placed
-# under conditional filters.
-CONFIG_TXT=/boot/config.txt
+#############################  Stop & clean old units  #########################
+systemctl stop    deskpi.service 2>/dev/null || true
+systemctl disable deskpi.service 2>/dev/null || true
+rm -f "$FAN_SERVICE"
+systemctl stop    deskpi-cut-off-power.service 2>/dev/null || true
+systemctl disable deskpi-cut-off-power.service 2>/dev/null || true
+rm -f "$PWR_CUTOFF_SERVICE"
+
+#############################  Source the upstream repository  ################
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+SOURCE_DIR="$SCRIPT_DIR/../../drivers/c"
+CONFIG_DIR="$SCRIPT_DIR/../.."
+
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "Cloning upstream repository (local source not found)..."
+    apt-get install -y git >/dev/null
+    rm -rf /tmp/deskpi
+    git clone https://github.com/DeskPi-Team/deskpi.git /tmp/deskpi || {
+        echo "ERROR: Failed to clone repository. Check your internet connection." >&2
+        exit 1
+    }
+    SOURCE_DIR="/tmp/deskpi/installation/drivers/c"
+    CONFIG_DIR="/tmp/deskpi/installation"
+fi
+
+#############################  Build binaries  #################################
+echo "Building binaries in $SOURCE_DIR"
+cd "$SOURCE_DIR"
+make clean
+make
+
+#############################  Install binaries  ###############################
+echo "Installing binaries to $BIN_DIR"
+install -m 755 "$SOURCE_DIR/$FAN_BIN"        "$BIN_DIR/$FAN_BIN"
+install -m 755 "$SOURCE_DIR/$SAFE_CUTOFF_BIN"        "$BIN_DIR/$SAFE_CUTOFF_BIN"
+install -m 755 "$CONFIG_DIR/deskpi-shutdown-helper"   "$BIN_DIR/deskpi-shutdown-helper"
+install -m 755 "$CONFIG_DIR/$CFG_BIN"        "$BIN_DIR/$CFG_BIN"
+
+#############################  Enable dwc2 overlay  ############################
+# IMPORTANT: The dwc2 overlay MUST live in the GLOBAL section of config.txt
+# (i.e. BEFORE the first [pi4]/[cm4]/[all]/... conditional header).
+DWC2_LINE='dtoverlay=dwc2,dr_mode=host'
 if ! awk '
     BEGIN { in_header = 0 }
     /^\[/ { in_header = 1 }
     !in_header && /^dtoverlay=dwc2/ { found = 1 }
     END { exit !found }
 ' "$CONFIG_TXT" 2>/dev/null; then
-  echo "Adding dtoverlay=dwc2,dr_mode=host to GLOBAL section of $CONFIG_TXT."
-  cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)" 2>/dev/null || sudo cp "$CONFIG_TXT" "$CONFIG_TXT.bak.$(date +%F-%H-%M-%S)"
-  sudo sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
-  if sudo grep -q '^\[' "$CONFIG_TXT"; then
-    sudo awk -v line='dtoverlay=dwc2,dr_mode=host' '
-        BEGIN { inserted = 0 }
-        !inserted && /^\[/ { print line; inserted = 1 }
-        { print }
-    ' "$CONFIG_TXT" | sudo tee "$CONFIG_TXT.tmp" >/dev/null && sudo mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
-  else
-    sudo sed -i '1i\dtoverlay=dwc2,dr_mode=host' "$CONFIG_TXT"
-  fi
-  echo "dwc2 overlay will be enabled after rebooting."
+    echo "Enabling dwc2 host overlay in GLOBAL section of $CONFIG_TXT"
+    cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
+    sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
+    if grep -q '^\[' "$CONFIG_TXT"; then
+        awk -v line="$DWC2_LINE" '
+            BEGIN { inserted = 0 }
+            !inserted && /^\[/ { print line; inserted = 1 }
+            { print }
+        ' "$CONFIG_TXT" > "$CONFIG_TXT.tmp" && mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
+    else
+        sed -i "1i\\$DWC2_LINE" "$CONFIG_TXT"
+    fi
 fi
 
-# Define systemd service name
-fanDaemon="/etc/systemd/system/deskpi.service"
-pwrCutOffDaemon="/etc/systemd/system/deskpi-cut-off-power.service"
+#############################  Create systemd unit: fan  #######################
+if [ ! -f "$FAN_SERVICE" ]; then
+    echo "Creating $FAN_SERVICE"
+    cat > "$FAN_SERVICE" <<EOF
+[Unit]
+Description=DeskPi Fan Control Service
+After=multi-user.target
 
-# genreate systemd service file
-if [ ! -e $fanDaemon ]; then
-echo "[Unit]" >> $fanDaemon
-echo "Description=DeskPi Fan Control Service" >> $fanDaemon
-echo "After=multi-user.target" >> $fanDaemon
-echo "[Service]" >> $fanDaemon
-echo "Type=simple" >> $fanDaemon
-echo "RemainAfterExit=true" >> $fanDaemon
-echo "ExecStart=/usr/bin/pwmFanControl64 &" >> $fanDaemon
-echo "[Install]" >> $fanDaemon
-echo "WantedBy=multi-user.target" >> $fanDaemon
+[Service]
+Type=simple
+RemainAfterExit=true
+ExecStart=$BIN_DIR/$FAN_BIN
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
 fi
 
-# send signal to MCU before system shutting down.
-if [ ! -e $pwrCutOffDaemon ]; then
-  echo "[Unit]" >> $pwrCutOffDaemon
-  echo "Description=DeskPi-cut-off-power service" >> $pwrCutOffDaemon
-  echo "Conflicts=reboot.target" >> $pwrCutOffDaemon
-  echo "Before=halt.target shutdown.target poweroff.target" >> $pwrCutOffDaemon
-  echo "DefaultDependencies=no" >> $pwrCutOffDaemon
-  echo "[Service]" >> $pwrCutOffDaemon
-  echo "Type=oneshot" >> $pwrCutOffDaemon
-  echo "ExecStart= /usr/bin/safeCutOffPower64" >> $pwrCutOffDaemon
-  echo "RemainAfterExit=yes" >> $pwrCutOffDaemon
-  echo "[Install]" >> $pwrCutOffDaemon
-  echo "WantedBy=halt.target shutdown.target poweroff.target" >> $pwrCutOffDaemon
+#############################  Create systemd unit: cut-off-power  ############
+# Runs at poweroff.target, writes "power_off" to the MCU so it cuts the
+# 5 V rail ~15 s later. Skipped on reboot via Conflicts=reboot.target.
+if [ ! -f "$PWR_CUTOFF_SERVICE" ]; then
+    echo "Creating $PWR_CUTOFF_SERVICE"
+    cat > "$PWR_CUTOFF_SERVICE" <<'DESKPIPOWER_EOF'
+[Unit]
+Description=DeskPi-cut-off-power service
+Conflicts=reboot.target
+Before=halt.target shutdown.target poweroff.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+# Logging is done by the helper itself (systemd's $?/$rc parsing can't capture the binary's exit code).
+ExecStart={BINDIR}/deskpi-shutdown-helper
+# (Post hook removed: rc and PID are logged inside the helper, see above.)
+RemainAfterExit=yes
+
+[Install]
+WantedBy=halt.target shutdown.target poweroff.target
+DESKPIPOWER_EOF
+    sed -i -e "s|{BINDIR}|$BIN_DIR|g" -e "s|{SAFECUTOFFBIN}|$SAFE_CUTOFF_BIN|g" "$PWR_CUTOFF_SERVICE"
 fi
 
-# grant privilleges to root user.
-if [ -e $fanDaemon ]; then
-  chown root:root $fanDaemon
-  chmod 755 $fanDaemon
-  echo "Load DeskPi service and load modules"
-  systemctl daemon-reload
-  systemctl enable deskpi.service
-  systemctl start deskpi.service &
-fi
+#############################  Reload & start  #################################
+systemctl daemon-reload
+systemctl enable --now deskpi.service               || echo "[WARN] Failed to start deskpi.service"
+systemctl enable    deskpi-cut-off-power.service   || echo "[WARN] Failed to enable deskpi-cut-off-power.service"
 
-if [ -e $pwrCutOffDaemon ]; then
-  chown root:root $pwrCutOffDaemon
-  chmod 755 $pwrCutOffDaemon
-  systemctl enable deskpi-cut-off-power.service
-fi
-
-
-# Greetings
-if [ $? -eq 0 ]; then
-  echo "Congratulations! DeskPi Pro driver has been installed successfully, Have Fun!"
-  echo "System will be reboot in 5 seconds to take effect."
+#############################  Final message  ##################################
+echo "DeskPi Pro driver installed successfully!"
+if [ "$AUTO_REBOOT" -eq 1 ]; then
+    echo "System will reboot in 5 seconds..."
+    sync && sleep 5 && reboot
 else
-  echo "Could not download deskpi repository, please check the internet connection and try to execute it again. "
-  echo "Usage: sudo ./install-raspios-64bit.sh"
+    echo "Please reboot manually to apply dwc2 overlay:  sudo reboot"
 fi
-
-sync && sleep 5 &&  reboot

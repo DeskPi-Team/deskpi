@@ -60,15 +60,32 @@ if [ -f "$PWR_SERVICE" ]; then
 fi
 
 ##############################  Remove binaries  ###############################
-for bin in "$FAN_BIN" "safeCutOffPower64" "$CFG_BIN" "pwmFanControl64V2"; do
+for bin in "$FAN_BIN" "safeCutOffPower64" "$CFG_BIN" "pwmFanControl64V2" \
+           "deskpi-shutdown-helper"; do
     [ -f "$BIN_DIR/$bin" ] && rm -f "$BIN_DIR/$bin" && echo "Removed $BIN_DIR/$bin"
 done
+
+##############################  Remove user config  ############################
+[ -f /etc/deskpi.conf ] && rm -f /etc/deskpi.conf && echo "Removed /etc/deskpi.conf"
+[ -f /var/log/deskpi-shutdown.log ] && echo "Kept /var/log/deskpi-shutdown.log (history of past shutdowns)"
 
 ##############################  Clean temp clone  ##############################
 if [ -d /tmp/deskpi ]; then
     rm -rf /tmp/deskpi
     echo "Removed /tmp/deskpi"
 fi
+
+##############################  Remove dwc2 overlay  ###########################
+# Mirror of the installer's logic: the installer added dtoverlay=dwc2,dr_mode=host
+# to /boot/firmware/config.txt, so the uninstaller should remove it.
+# (Commented hints like "#dtoverlay=dwc2" are left alone — they are templates.)
+for f in /boot/firmware/config.txt /boot/efi/config.txt /boot/config.txt; do
+    [ -f "$f" ] || continue
+    if grep -q '^dtoverlay=dwc2' "$f"; then
+        sed -i '/^dtoverlay=dwc2/d' "$f"
+        echo "Removed dtoverlay=dwc2 from $f"
+    fi
+done
 
 ##############################  Final message  #################################
 echo "DeskPi Pro driver has been uninstalled successfully!"

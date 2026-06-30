@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#==============================================================================
+# deskpi-shutdown-helper
+# https://github.com/DeskPi-Team/deskpi
+#
+# Wrapper invoked by deskpi-cut-off-power.service. Writes a structured
+# log line to /var/log/deskpi-shutdown.log before and after running
+# safeCutOffPower64, so the user has a queryable history of every
+# shutdown.
+#
+# Why a wrapper?  systemd's parser expands $? and $rc in unit files as
+# environment-variable lookups, which fails at unit-load time.  The
+# helper script is the only place that can safely read the real exit
+# code of safeCutOffPower64 ($? at this point) and log it.
+#
+# Why a sleep?  The DeskPi Pro daughter board waits ~15 s after
+# receiving the "power_off" byte sequence before it actually cuts the
+# 5 V rail.  On a Raspberry Pi 4 with the EEPROM setting
+# POWER_OFF_ON_HALT=0 (the default on this image) the kernel returns
+# from `systemctl poweroff` very quickly and the firmware can reboot
+# the SoC before the 15 s window has elapsed — so 5 V is never cut.
+# Holding this helper open for CUT_OFF_HOLD_SECONDS blocks the rest of
+# the poweroff.target chain (and therefore the kernel halt) long
+# enough for the MCU to do its job.  After the 5 V is cut the SoC
+# loses power and the held process is torn down by the hardware — no
+# clean exit, no double-shutdown.
+#==============================================================================
+set -u
+
+LOG=/var/log/deskpi-shutdown.log
+BIN=/usr/bin/safeCutOffPower64
+CUT_OFF_HOLD_SECONDS="${DESKPI_CUT_OFF_HOLD_SECONDS:-18}"
+
+mkdir -p "$(dirname "$LOG")"
+touch "$LOG"
+
+# Note: we deliberately do NOT use 'set -e' — we want to log even when
+# safeCutOffPower64 fails, so we capture the exit code ourselves.
+{
+    echo "$(date -Is) BEGIN power_off pid=$$ triggered_by=deskpi-cut-off-power.service hold=${CUT_OFF_HOLD_SECONDS}s"
+} >> "$LOG"
+
+"$BIN"
+rc=$?
+
+if [ "$rc" -eq 0 ]; then
+    # Hold the shutdown sequence open so the MCU has time to cut 5 V.
+    # If the MCU cuts the rail mid-sleep, this process is killed by the
+    # kernel losing power — that's fine, we already wrote the log line.
+    {
+        echo "$(date -Is) HOLD power_off pid=$$ waiting=${CUT_OFF_HOLD_SECONDS}s for MCU to cut 5V"
+    } >> "$LOG"
+    sleep "$CUT_OFF_HOLD_SECONDS" || true
+fi
+
+{
+    echo "$(date -Is) END   power_off pid=$$ rc=$rc"
+} >> "$LOG"
+
+exit "$rc"
