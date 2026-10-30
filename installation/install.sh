@@ -12,7 +12,8 @@
 #
 # Options:
 #   --auto-reboot   Reboot automatically after a successful install
-#   --yes, -y       Skip the "Are you sure?" prompt
+#   --yes, -y       Skip the "Are you sure?" prompt and auto-confirm
+#                   the per-script [y/N] prompts
 #   --os=<distro>   Skip detection and force a specific installer
 #                   (one of: raspi | ubuntu | debian | dietpi |
 #                            kali | manjaro | fedora)
@@ -51,7 +52,9 @@ ${C_BOLD}Usage:${C_RESET} sudo $0 [options]
 
 ${C_BOLD}Options:${C_RESET}
   --auto-reboot       Reboot automatically after a successful install
-  --yes, -y           Skip the "Are you sure?" confirmation prompt
+  --yes, -y           Skip the "Are you sure?" confirmation prompt and
+                      auto-confirm the per-script [y/N] prompts
+                      (config.txt, /etc/deskpi.conf)
   --os=<distro>       Skip detection and force a specific installer.
                       Supported values:
                         raspi     Raspberry Pi OS (any 64-bit release)
@@ -336,4 +339,7 @@ say "Dispatching to: $DISTRO_INSTALLER"
 EXTRA_ARGS=()
 [ "$AUTO_REBOOT" = "1" ] && EXTRA_ARGS+=("--auto-reboot")
 [ "$VERBOSE"    = "1" ] && EXTRA_ARGS+=("--verbose")
+# Propagate --yes: the per-distro installers ask their own [y/N] prompts
+# before touching config.txt; assume yes for all of them.
+[ "$YES" = "1" ] && export DESKPI_ASSUME_YES=1
 exec "$DISTRO_INSTALLER" "${EXTRA_ARGS[@]}"

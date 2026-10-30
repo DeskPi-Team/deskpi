@@ -132,16 +132,25 @@ set_curve() {
         old_log=$(awk '$1 == "log_fan_changes" { print $3; exit }' "$CONF_FILE" 2>/dev/null)
 
     # install(1) truncates and creates with the requested mode in one step.
-    sudo install -m 666 /dev/null "$CONF_FILE"
+    sudo install -m 0644 /dev/null "$CONF_FILE"
 
+    # All documentation lives in one grouped header at the top of the file.
+    # The log_fan_changes line is appended at the end of the file after the
+    # curve — commented-out by default so the user only has to uncomment it
+    # (or uncommented, if it was already enabled).
     {
         printf '# /etc/deskpi.conf — DeskPi Pro fan curve\n'
-        printf '# One "fan_N = TEMPERATURE" line per level: the CPU temperature (degC)\n'
-        printf '# up to which that level applies. Above the last line the fan runs at 100 %%.\n'
-        printf '# Blank lines and #-comments are ignored; values must not decrease.\n'
         printf '#\n'
-        printf '# Optional: log_fan_changes = 1 — journal a line on every fan level\n'
-        printf '# change (e.g. "fan 25 %% -> 50 %% at 62 degC"). Default: 0 (silent).\n'
+        printf '# Fan curve: one "fan_N = TEMPERATURE" line per level, where\n'
+        printf '# TEMPERATURE is the CPU temperature (degC) up to which that\n'
+        printf '# level applies. Above the last line (fan_75) the fan runs at\n'
+        printf '# 100 %%. Values must not decrease; blank lines and #-comments\n'
+        printf '# are ignored.\n'
+        printf '#\n'
+        printf '# Optional: log_fan_changes = 1 — journal a line on every fan\n'
+        printf '# level change (e.g. "fan 25 %% -> 50 %% at 62 degC").\n'
+        printf '# Default: 0 (silent). Uncomment the last line to enable it.\n'
+        printf '\n'
     } | sudo tee "$CONF_FILE" >/dev/null
 
     local level temp prev=0
@@ -171,9 +180,10 @@ set_curve() {
         fi
         prev=$temp
     done
-    printf '# above fan_75 the fan runs at 100 %%\n' | sudo tee -a "$CONF_FILE" >/dev/null
     if [ "$old_log" = "1" ]; then
         printf 'log_fan_changes = 1\n' | sudo tee -a "$CONF_FILE" >/dev/null
+    else
+        printf '# log_fan_changes = 1\n' | sudo tee -a "$CONF_FILE" >/dev/null
     fi
     ok "Wrote $CONF_FILE"
 }

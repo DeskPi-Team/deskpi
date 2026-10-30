@@ -24,13 +24,27 @@ This command lists all the USB devices in a tree, and for each of the hard drive
   editing the file run `sudo systemctl restart deskpi.service`.
 * The file is human-readable: one `fan_N = TEMPERATURE` line per fan
   level, where TEMPERATURE is the CPU temperature (°C) **up to which**
-  that level applies. Above the last line the fan runs at 100 %:
+  that level applies. Above the last line the fan runs at 100 %.
+  `deskpi-config` writes the file with a documentation header and a
+  commented-out logging option at the end:
   ```
-  fan_0   = 40    # 0 %  (off) while CPU ≤ 40 °C
-  fan_25  = 50    # 25 % between 40 and 50 °C
-  fan_50  = 65    # 50 % between 50 and 65 °C
-  fan_75  = 75    # 75 % between 65 and 75 °C
-                  # 100 % above 75 °C
+  # /etc/deskpi.conf — DeskPi Pro fan curve
+  #
+  # Fan curve: one "fan_N = TEMPERATURE" line per level, where
+  # TEMPERATURE is the CPU temperature (degC) up to which that
+  # level applies. Above the last line (fan_75) the fan runs at
+  # 100 %. Values must not decrease; blank lines and #-comments
+  # are ignored.
+  #
+  # Optional: log_fan_changes = 1 — journal a line on every fan
+  # level change (e.g. "fan 25 % -> 50 % at 62 degC").
+  # Default: 0 (silent). Uncomment the last line to enable it.
+
+  fan_0 = 40
+  fan_25 = 50
+  fan_50 = 65
+  fan_75 = 75
+  # log_fan_changes = 1
   ```
   The fan speeds themselves are fixed at 0 / 25 / 50 / 75 / 100 % —
   only the four temperatures are configurable. There is deliberately
@@ -39,7 +53,9 @@ This command lists all the USB devices in a tree, and for each of the hard drive
 * Optional key `log_fan_changes = 1` journals a line on every fan
   level change with the temperature that triggered it, e.g.
   `pwmFanControl64V3: fan 25 % -> 50 % at 62 degC`
-  (`journalctl -u deskpi.service`). Default is `0` (silent).
+  (`journalctl -u deskpi.service`). Default is `0` (silent) — to
+  enable it, uncomment the `# log_fan_changes = 1` line at the end of
+  the file.
 * You cannot break anything by hand-editing: every inconsistency is
   reported in the journal and repaired — garbage lines and unknown
   keys are skipped (with a warning), values are clamped to 1–110 °C,
@@ -51,8 +67,9 @@ This command lists all the USB devices in a tree, and for each of the hard drive
   for the four temperatures in sequence (`fan_0` → `fan_25` →
   `fan_50` → `fan_75`, each prompt showing which level comes next and
   ending with "100 % (pwm_100) above <fan_75> degC") and writes the
-  file for you (preserving `log_fan_changes = 1` if you had enabled
-  it).
+  file for you with mode `0644`, the documentation header shown above,
+  and a commented-out `# log_fan_changes = 1` at the end (an already
+  enabled `log_fan_changes = 1` is preserved uncommented).
 
 ## What are the credentials on the pre-installed Raspbian OS image?
 * Username: `pi`, password: `raspberry`. This is the standard Raspbian
@@ -71,7 +88,10 @@ This command lists all the USB devices in a tree, and for each of the hard drive
 * That is almost always because `dtoverlay=dwc2,dr_mode=host` is
   missing from `/boot/firmware/config.txt` (or `/boot/config.txt` on
   legacy layouts). Add that line and reboot. The unified installer
-  adds it for you automatically.
+  adds it for you — it shows the exact diff and asks for confirmation
+  first, and marks the inserted block with a `# DeskPi` comment so it
+  is easy to find (and cleanly removed by the uninstaller, which asks
+  the same way).
 
 ## How do I change the hostname on the pre-installed Raspbian OS image?
 * Either run `sudo raspi-config` and pick **System Options** → **S4

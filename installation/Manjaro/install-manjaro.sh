@@ -99,16 +99,43 @@ if ! awk '
 ' "$CONFIG_TXT" 2>/dev/null; then
     echo "Enabling dwc2 host overlay in GLOBAL section of $CONFIG_TXT"
     cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
-    sed -i '/^dtoverlay=dwc2/d' "$CONFIG_TXT"
+    # Build the modified copy first (dry run) and show the user exactly
+    # what will change before anything is written.
+    TMP_CFG="$CONFIG_TXT.deskpi-new"
     if grep -q '^\[' "$CONFIG_TXT"; then
-        awk -v line="$DWC2_LINE" '
-            BEGIN { inserted = 0 }
-            !inserted && /^\[/ { print line; inserted = 1 }
-            { print }
-        ' "$CONFIG_TXT" > "$CONFIG_TXT.tmp" && mv "$CONFIG_TXT.tmp" "$CONFIG_TXT"
+        # Insert marker + overlay BEFORE the first [header].
+        sed -e '/^dtoverlay=dwc2/d' -e '/^# DeskPi$/d' "$CONFIG_TXT" \
+            | awk -v line="$DWC2_LINE" '
+                BEGIN { inserted = 0 }
+                !inserted && /^\[/ { print "# DeskPi"; print line; print ""; inserted = 1 }
+                { print }
+            ' > "$TMP_CFG"
     else
-        sed -i "1i\\$DWC2_LINE" "$CONFIG_TXT"
+        # No conditional headers: prepend to the top of the file.
+        sed -e '/^dtoverlay=dwc2/d' -e '/^# DeskPi$/d' "$CONFIG_TXT" > "$TMP_CFG"
+        { printf '# DeskPi\n%s\n\n' "$DWC2_LINE"; cat "$TMP_CFG"; } \
+            > "$TMP_CFG.new" && mv "$TMP_CFG.new" "$TMP_CFG"
     fi
+    echo "The following changes will be made to $CONFIG_TXT:"
+    diff -u "$CONFIG_TXT" "$TMP_CFG" || true
+    printf 'Apply these changes to %s? [y/N]: ' "$CONFIG_TXT"
+    if [ "$DESKPI_ASSUME_YES" = "1" ]; then
+        REPLY=y
+    else
+        read -r REPLY || REPLY=""
+    fi
+    case "$REPLY" in
+        [yY]|[yY][eE][sS])
+            cp "$CONFIG_TXT" "$CONFIG_TXT_BKP"
+            # cat > keeps the file's original permissions and ownership.
+            cat "$TMP_CFG" > "$CONFIG_TXT"
+            echo "Changes applied to $CONFIG_TXT (backup: $CONFIG_TXT_BKP)."
+            ;;
+        *)
+            echo "Skipped: $CONFIG_TXT left unchanged."
+            ;;
+    esac
+    rm -f "$TMP_CFG"
 fi
 
 #############################  Create systemd unit: fan  #######################

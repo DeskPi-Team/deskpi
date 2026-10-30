@@ -23,8 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `fan level 50 % asserted at 62 degC (startup)`). Boolean value,
   default `0` (silent); non-0/1 values are treated as `1` with a
   warning; duplicates follow the first-value-wins rule. `deskpi-config`
-  preserves the setting when rewriting the curve and documents the key
-  in the file header it writes.
+  preserves the setting when rewriting the curve; in the generated file
+  the key is documented in the header and written commented-out
+  (`# log_fan_changes = 1`) at the end — uncomment that one line to
+  enable journaling.
 
 - **End-to-end event logging of the shutdown chain.** Every step of the
   5 V cut-off flow is now visible in the logs: the daemon announces its
@@ -64,6 +66,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   shutdown history file itself is deliberately kept on uninstall.
 
 ### Changed
+- **Safer, self-documenting `/etc/deskpi.conf` written by
+  `deskpi-config`.** The wizard (option 6) creates the file with mode
+  `0644` (was `0666` — the old mode made the daemon's config
+  world-writable). All documentation now lives in one grouped header
+  block at the top of the file (curve format, monotonicity rule, the
+  optional logging key), followed by a blank line and the four
+  `fan_N = TEMPERATURE` lines; the file ends with a commented-out
+  `# log_fan_changes = 1` the user can simply uncomment. An already
+  enabled `log_fan_changes = 1` survives a rewrite (written
+  uncommented in the same place). The two copies of the script
+  (`installation/deskpi-config` and `installation/drivers/deskpi-config`)
+  remain identical; both are shellcheck-clean.
+
+- **Installers and uninstallers now show the exact change and ask
+  before touching boot/fan configuration.**
+  - **Install** (`config.txt`): the modified copy is built first
+    (dry run), shown as a unified `diff -u` against the current file,
+    and applied only after an `Apply these changes? [y/N]` prompt
+    (default: no). On approval the previous file is backed up under a
+    timestamped name (`config.txt.<YYYY-MM-DD-HH-MM-SS>.bak`); the
+    rewrite via `cat >` preserves the file's permissions and ownership. The unified installer's `--yes` flag
+    (exported as `DESKPI_ASSUME_YES=1`) auto-confirms these prompts
+    for scripted / non-interactive runs.
+  - **Uninstall** (`config.txt`): the lines to be removed are listed
+    with line numbers before the same `[y/N]` prompt.
+  - **Uninstall** (`/etc/deskpi.conf`): the file contents are shown
+    and its removal requires a separate `Remove /etc/deskpi.conf?
+    [y/N]` confirmation — an empty answer keeps the file.
+  - The dwc2 overlay block inserted into the global section of
+    `config.txt` is now marked with a `# DeskPi` comment and separated
+    by a blank line, so it is easy to spot and re-run-safe: the
+    de-dup step removes stray markers and old overlay lines before
+    re-inserting.
 - **Log audit of the fan daemon and cut-off helper.** Unified every
   message under the `pwmFanControl64V3:` / `safeCutOffPower64:` prefix
   (the daemon's serial errors used bare `perror("open serial")`-style
@@ -135,6 +170,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   the installers' curl fallback creates. All of these are now removed
   by every uninstaller; `/var/log/deskpi-shutdown.log` and its rotated
   archives remain deliberately (user's shutdown history).
+
+- **`Deskpi-uninstall` no longer deletes `/etc/deskpi.conf` behind the
+  user's back.** The legacy menu wrapper used to run an unconditional
+  `rm -f /etc/deskpi.conf` after dispatching to the per-distro
+  uninstaller, silently undoing the uninstaller's own (now
+  interactive) decision and bypassing its confirmation prompt. The
+  redundant deletes were removed — the per-distro uninstaller is the
+  single place where the file is removed, and it asks first.
+
+- **Shellcheck clean-up in `utils/log_functions.include`.** Added a
+  `shell=sh` directive for the sourced-only helper and replaced
+  `echo "$@."` with `echo "$*."` so a multi-word message keeps its
+  trailing dot on the last word. All repository shell scripts now
+  pass `shellcheck` without warnings (except the two info-level
+  `SC1091` follow-notes in the legacy `Deskpi-uninstall` wrapper for
+  files that only exist on an installed system).
 
 - **Fan stuck at its previous level after a daemon restart.**
   `pwmFanControl_v3.c` initialised `last_pwm` to 0, i.e. it assumed

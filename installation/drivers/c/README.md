@@ -82,15 +82,22 @@ applies. Above the last line the fan runs at 100 %. Blank lines and
 
 ```
 # /etc/deskpi.conf — DeskPi Pro fan curve
+#
+# Fan curve: one "fan_N = TEMPERATURE" line per level, where
+# TEMPERATURE is the CPU temperature (degC) up to which that
+# level applies. Above the last line (fan_75) the fan runs at
+# 100 %. Values must not decrease; blank lines and #-comments
+# are ignored.
+#
+# Optional: log_fan_changes = 1 — journal a line on every fan
+# level change (e.g. "fan 25 % -> 50 % at 62 degC").
+# Default: 0 (silent). Uncomment the last line to enable it.
 
-fan_0   = 40    # 0 %  (off) while CPU ≤ 40 °C
-fan_25  = 50    # 25 % between 40 and 50 °C
-fan_50  = 65    # 50 % between 50 and 65 °C
-fan_75  = 75    # 75 % between 65 and 75 °C
-                # 100 % above 75 °C
-
-# Optional: journal every fan level change
-log_fan_changes = 1
+fan_0 = 40
+fan_25 = 50
+fan_50 = 65
+fan_75 = 75
+# log_fan_changes = 1
 ```
 
 With `log_fan_changes = 1` the daemon journals a line on every fan

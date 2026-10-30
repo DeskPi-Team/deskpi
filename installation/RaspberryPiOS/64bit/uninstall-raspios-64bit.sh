@@ -67,8 +67,25 @@ done
 
 ##############################  Remove user config  ############################
 if [ -f /etc/deskpi.conf ]; then
-    rm -f /etc/deskpi.conf
-    echo "Removed /etc/deskpi.conf"
+    echo "The following file will be REMOVED: /etc/deskpi.conf"
+    echo "--- begin /etc/deskpi.conf ---"
+    cat /etc/deskpi.conf
+    echo "--- end /etc/deskpi.conf ---"
+    printf 'Remove /etc/deskpi.conf? [y/N]: '
+    if [ "$DESKPI_ASSUME_YES" = "1" ]; then
+        REPLY=y
+    else
+        read -r REPLY || REPLY=""
+    fi
+    case "$REPLY" in
+        [yY]|[yY][eE][sS])
+            rm -f /etc/deskpi.conf
+            echo "Removed /etc/deskpi.conf"
+            ;;
+        *)
+            echo "Skipped: /etc/deskpi.conf left in place."
+            ;;
+    esac
 fi
 rm -f /etc/logrotate.d/deskpi
 [ -f /var/log/deskpi-shutdown.log ] && echo "Kept /var/log/deskpi-shutdown.log (history of past shutdowns)"
@@ -90,10 +107,24 @@ fi
 # (Commented hints like "#dtoverlay=dwc2" are left alone — they are templates.)
 for f in /boot/firmware/config.txt /boot/efi/config.txt /boot/config.txt; do
     [ -f "$f" ] || continue
-    if grep -q '^dtoverlay=dwc2' "$f"; then
-        sed -i '/^dtoverlay=dwc2/d' "$f"
-        echo "Removed dtoverlay=dwc2 from $f"
+    grep -Eq '^(dtoverlay=dwc2|# DeskPi)' "$f" || continue
+    echo "The following lines will be REMOVED from $f:"
+    grep -nE '^(dtoverlay=dwc2|# DeskPi)' "$f"
+    printf 'Apply these changes to %s? [y/N]: ' "$f"
+    if [ "$DESKPI_ASSUME_YES" = "1" ]; then
+        REPLY=y
+    else
+        read -r REPLY || REPLY=""
     fi
+    case "$REPLY" in
+        [yY]|[yY][eE][sS])
+            sed -i -e '/^dtoverlay=dwc2/d' -e '/^# DeskPi$/d' "$f"
+            echo "Removed dtoverlay=dwc2 from $f"
+            ;;
+        *)
+            echo "Skipped: $f left unchanged."
+            ;;
+    esac
 done
 
 ##############################  Final message  #################################

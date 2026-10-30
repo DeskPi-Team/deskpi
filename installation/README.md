@@ -39,7 +39,13 @@ which OS you pick.
 | `deskpi-cut-off-power.service` | `/etc/systemd/system/deskpi-cut-off-power.service` | `Type=oneshot` service, `WantedBy=halt.target shutdown.target poweroff.target`, `Conflicts=reboot.target`. Runs the shutdown helper during the shutdown sequence. |
 | `deskpi-shutdown-helper` | `/usr/bin/deskpi-shutdown-helper` | Wrapper around `safeCutOffPower64`; logs every shutdown event to `/var/log/deskpi-shutdown.log` and journald. |
 | `deskpi.logrotate` | `/etc/logrotate.d/deskpi` | Monthly rotation (3 compressed archives) of `/var/log/deskpi-shutdown.log`. |
-| `dtoverlay=dwc2,dr_mode=host` | `/boot/firmware/config.txt` (or `/boot/config.txt` on legacy layouts) | Enables the dwc2 host-mode overlay so the on-board CH340 enumerates as `/dev/ttyUSB0`. |
+| `dtoverlay=dwc2,dr_mode=host` | `/boot/firmware/config.txt` (or `/boot/config.txt` on legacy layouts) | Enables the dwc2 host-mode overlay so the on-board CH340 enumerates as `/dev/ttyUSB0`. Inserted into the global section (before the first `[…]` filter) and marked with a `# DeskPi` comment. The installer shows the exact diff and asks `[y/N]` before writing; the uninstaller lists the lines it removes and asks the same way. |
+
+Both `/boot/…/config.txt` and `/etc/deskpi.conf` are never modified
+silently: installers show a unified diff of the intended change and
+uninstallers list the exact lines (or file contents) to be removed —
+each step requires an explicit `[y/N]` confirmation, and an empty
+answer leaves the file untouched.
 
 > If `systemctl list-unit-files` shows `deskpi.service` but not
 > `deskpi-cut-off-power.service`, the OS will halt but the 5 V rail will

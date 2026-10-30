@@ -6,6 +6,16 @@ The DeskPi Pro is a hardware kit for converting a standard Raspberry Pi 4 from a
 
 See [CHANGELOG.md](CHANGELOG.md) for the full history. Highlights:
 
+- **[Unreleased] — Guided, safer config edits.** Every installer and
+  uninstaller now shows the exact change before touching
+  `/boot/firmware/config.txt` or `/etc/deskpi.conf` — a unified diff
+  on install, the numbered lines to be removed on uninstall, the file
+  contents before its deletion — and asks `[y/N]` (default: no). The
+  dwc2 overlay block in `config.txt` is marked with a `# DeskPi`
+  comment for easy spotting. `deskpi-config` writes
+  `/etc/deskpi.conf` with mode `0644` (was world-writable `0666`),
+  one grouped documentation header, and a ready-to-uncomment
+  `# log_fan_changes = 1` at the end of the file.
 - **[Unreleased] — Fan daemon renamed to V3.** `pwmFanControl_v2.c` →
   `pwmFanControl_v3.c`, binary `pwmFanControl64V2` →
   `pwmFanControl64V3`: spin-down to `pwm_000` fixed, the 5 V cut-off
@@ -47,7 +57,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full history. Highlights:
   `{40,25, 50,50, 65,75, 75,100}` so the fan is off below 40 °C and
   ramps up smoothly: 25 % → 50 % → 75 % → 100 % at 40 / 50 / 65 / 75 °C.
 - **2026-06-22 — 5 V cutoff on shutdown fixed.** The Raspberry Pi OS installer now deploys `deskpi-cut-off-power.service` and ships a one-shot `safeCutOffPower64` binary, so double-pressing the front power button triggers `systemctl poweroff` *and* tells the DeskPi Pro MCU to cut the 5 V rail ~15 s later. `safeCutOffPower.c` was also rewritten to remove a `while(1)` busy loop that previously caused `Type=oneshot` services to wait out `TimeoutStartSec`. All other distro installers (Ubuntu / DietPi / Kali / Manjaro / Fedora) have been brought in line with the same canonical layout, and all uninstallers are hardened to clean up the new artifacts.
-- **2026-06-22 — Unified installer / uninstaller.** `installation/install.sh` and `installation/uninstall.sh` now auto-detect the running OS, print a summary, and ask for confirmation before doing anything. They dispatch to the matching per-distro script. Both accept `--help`, `--dry-run`, `--yes`, and `--os=<distro>` to override detection.
+- **2026-06-22 — Unified installer / uninstaller.** `installation/install.sh` and `installation/uninstall.sh` now auto-detect the running OS, print a summary, and ask for confirmation before doing anything. They dispatch to the matching per-distro script. Both accept `--help`, `--dry-run`, `--yes`, and `--os=<distro>` to override detection. `--yes` also auto-answers the per-distro `[y/N]` prompts (config.txt on install/uninstall, `/etc/deskpi.conf` on uninstall) via `DESKPI_ASSUME_YES=1`.
 - **2026-06-22 — `deskpi-config` rewritten** with a portable ASCII banner, ANSI colors (auto-disabled when not on a TTY), `printf`-based serial writes, and input validation. Both copies in the tree are now identical.
 - **2026-06-22 — legacy `uninstall.sh` hardened** — no more `figlet` dependency, and the typo'd `deskpi-cutoffpower.service` reference is fixed.
 
