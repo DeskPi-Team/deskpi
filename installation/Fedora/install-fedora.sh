@@ -121,7 +121,7 @@ if [ -f "$CONFIG_TXT" ] && ! awk '
     echo "The following changes will be made to $CONFIG_TXT:"
     diff -u "$CONFIG_TXT" "$TMP_CFG" || true
     printf 'Apply these changes to %s? [y/N]: ' "$CONFIG_TXT"
-    if [ "$DESKPI_ASSUME_YES" = "1" ]; then
+    if [ "${DESKPI_ASSUME_YES:-0}" = "1" ]; then
         REPLY=y
     else
         read -r REPLY || REPLY=""

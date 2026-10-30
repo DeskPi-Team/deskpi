@@ -59,7 +59,7 @@ if [ -f /etc/deskpi.conf ]; then
     cat /etc/deskpi.conf
     echo "--- end /etc/deskpi.conf ---"
     printf 'Remove /etc/deskpi.conf? [y/N]: '
-    if [ "$DESKPI_ASSUME_YES" = "1" ]; then
+    if [ "${DESKPI_ASSUME_YES:-0}" = "1" ]; then
         REPLY=y
     else
         read -r REPLY || REPLY=""
@@ -83,7 +83,7 @@ for f in /boot/firmware/config.txt /boot/config.txt; do
     echo "The following lines will be REMOVED from $f:"
     grep -nE '^(dtoverlay=dwc2|# DeskPi)' "$f"
     printf 'Apply these changes to %s? [y/N]: ' "$f"
-    if [ "$DESKPI_ASSUME_YES" = "1" ]; then
+    if [ "${DESKPI_ASSUME_YES:-0}" = "1" ]; then
         REPLY=y
     else
         read -r REPLY || REPLY=""
