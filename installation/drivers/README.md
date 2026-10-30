@@ -5,7 +5,7 @@
 > instructions. For the canonical, up-to-date documentation of the C
 > source tree (build, protocol, fan curve, 5 V cut-off flow), see
 > [`c/README.md`](c/README.md). The pre-built C daemon shipped by
-> every supported distro is `pwmFanControl64V2` — the legacy
+> every supported distro is `pwmFanControl64V3` — the legacy
 > `pwmFanControl` (V1) has been removed.
 
 # Control Your Fan through PWM signal via Serial port(OTG)
@@ -31,7 +31,7 @@ make
 ```
 * 3. How to run it.
 ```bash
-sudo ./pwmFanControl64V2
+sudo ./pwmFanControl64V3
 ```
 * 4. How to stop it.
 Press "Ctrl + C"
@@ -40,13 +40,17 @@ Press "Ctrl + C"
 make clean
 ```
 ## How to change speed of the fan.
-This program sends the pwm signal from Raspberry Pi to the extension board via OTG serial port, which is recognized as `/dev/ttyUSB0` on your Raspberry Pi. To customise the curve, edit `pwmFanControl_v2.c` and recompile, or use `sudo deskpi-config` for an interactive editor.
+This program sends the pwm signal from Raspberry Pi to the extension board via OTG serial port, which is recognized as `/dev/ttyUSB0` on your Raspberry Pi. To customise the temperature→speed curve, edit `/etc/deskpi.conf` (one `fan_N = TEMPERATURE` line per level; see `installation/drivers/c/README.md` for the full format) or use `sudo deskpi-config` for an interactive editor.
 * The fan daemon understands 5 PWM levels (sent as `pwm_NNN` to `/dev/ttyUSB0`):
   * 0 %  → `pwm_000` (fan off)
   * 25 % → `pwm_025`
   * 50 % → `pwm_050`
   * 75 % → `pwm_075`
   * 100 % → `pwm_100`
+
+  Note: in `/etc/deskpi.conf` there is no `fan_100` key — `fan_75` is the
+  switch-on temperature of the top level, and above it the fan simply runs
+  at 100 %.
 
 # Python
 ## How to control fan through PWM signal via serial port.

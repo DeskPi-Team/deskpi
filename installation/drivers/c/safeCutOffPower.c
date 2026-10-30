@@ -2,13 +2,15 @@
  * safeCutOffPower — robustly write "power_off" to the DeskPi Pro MCU
  * over /dev/ttyUSB0 so it cuts the 5 V rail ~15 s later.
  *
- * This is the BACKUP path for the cut-off signalling. The PRIMARY path
- * lives in pwmFanControl_v2.c's check_poweroff(): the moment the MCU
- * sends "poweroff" to the host (the front-panel double-click), the
- * daemon acks with "power_off" before calling `systemctl poweroff`.
- * This systemd service exists for the cases where the OS is shut down
- * by some other route (sudo poweroff over SSH, apt-triggered reboot,
- * etc.) so the MCU still gets the cut-off token.
+ * This is the ONLY sender of the cut-off token, for every shutdown
+ * cause. When the MCU sends "poweroff" to the host (the front-panel
+ * double-click), the fan daemon (pwmFanControl_v3.c) only triggers
+ * `systemctl poweroff` — it deliberately does not write the token
+ * itself, because an immediate ack would start the MCU's ~15 s
+ * rail-cut timer before the OS has stopped its services. This
+ * systemd service fires at poweroff.target, after every regular
+ * service has stopped, so the 15 s window covers only the final
+ * unmount + halt.
  *
  * Reliability requirements:
  *   - line discipline MUST be 9600 8N1, no hardware flow control.
@@ -21,19 +23,20 @@
  *     attempt races with the fan daemon also writing pwm_* tokens.
  *
  * Exit code:
- *   0  — at least one write() succeeded AND its tcdrain() returned 0.
- *        The systemd Type=oneshot unit can complete.
- *   1  — every write() failed (port not open, EBADF, etc.).
- *        The systemd unit will be marked failed, which is the right
- *        signal to the user that the cut-off signalling was lost.
+ *   0  — at least one attempt fully succeeded: write() wrote all 9
+ *        bytes AND its tcdrain() returned 0, so a copy of the token
+ *        left the UART shift register. The systemd Type=oneshot unit
+ *        can complete.
+ *   1  — no attempt fully succeeded (port not open, EBADF, tcdrain
+ *        failure on every copy, etc.). The systemd unit will be
+ *        marked failed, which is the right signal to the user that
+ *        the cut-off signalling was lost.
  */
 #include <stdio.h>
 #include <errno.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -79,8 +82,8 @@ static int open_serial_raw_8n1(void)
     /* Non-canonical, no echo, no signals. */
     tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHONL | ISIG);
 
-    /* VMIN=0, VTIME=10 deciseconds → write() returns immediately,
-     * read() returns after 1 s of silence or with whatever's in buf. */
+    /* VMIN=0, VTIME=10 deciseconds — set for completeness; this
+     * program never reads, write() is not affected by them. */
     tty.c_cc[VMIN]  = 0;
     tty.c_cc[VTIME] = 10;
 
@@ -89,8 +92,11 @@ static int open_serial_raw_8n1(void)
         return -1;
     }
 
-    /* Drain anything the fan daemon may have written in the last 1 s
-     * (pwm_xxx tokens) so it cannot corrupt our payload. */
+    /* Flush the kernel-side tty buffers (they are per-device, so this
+     * also discards bytes the fan daemon may have queued in the last
+     * 1 s — pwm_xxx tokens).  Note this cannot recall bytes that have
+     * already reached the CH340's hardware FIFO; the write REPEATS
+     * below is what protects against in-flight interleaving. */
     tcflush(fd, TCIOFLUSH);
     return fd;
 }
@@ -109,22 +115,39 @@ int main(void)
     static const char data[] = "power_off";
     const size_t len = sizeof(data) - 1;   /* 9 bytes, no NUL */
 
+    fprintf(stderr,
+            "safeCutOffPower64: %s open — sending the 'power_off' cut-off token "
+            "(the MCU cuts the 5 V rail ~15 s after receiving it)\n",
+            SERIAL_PORT);
+
     int ok_count = 0;
     for (int i = 0; i < REPEATS; i++) {
-        /* Re-flush before each write in case the fan daemon sneaked in
-         * a pwm_xxx token between our previous write and this one. */
+        /* Re-flush before each write in case the fan daemon (or a dying
+         * daemon's in-flight write) left bytes in the kernel tty buffer
+         * between our previous attempt and this one.  Bytes already in
+         * the CH340 hardware FIFO cannot be flushed — the REPEATS loop
+         * is the real protection there. */
         tcflush(fd, TCIOFLUSH);
 
         ssize_t n = write(fd, data, len);
         if (n == (ssize_t)len) {
-            ok_count++;
             /* tcdrain() blocks until every byte written above has been
              * transmitted out of the UART shift register. Without this,
              * a successful write() return value only means the kernel
              * accepted the bytes into the tty buffer — they may still
-             * be sitting there when the kernel halts. */
-            if (tcdrain(fd) != 0) {
-                perror("tcdrain");
+             * be sitting there when the kernel halts.  An attempt only
+             * counts as delivered once tcdrain() confirms the bytes
+             * left the wire (see exit-code contract in the header). */
+            if (tcdrain(fd) == 0) {
+                ok_count++;
+                /* Log the first delivery only — the final summary reports
+                 * n/REPEATS, five identical lines add nothing. */
+                if (ok_count == 1)
+                    fprintf(stderr,
+                            "safeCutOffPower64: attempt %d/%d: token delivered\n",
+                            i + 1, REPEATS);
+            } else {
+                perror("safeCutOffPower64: tcdrain");
             }
         } else if (n < 0) {
             fprintf(stderr, "safeCutOffPower64: write attempt %d failed: %s\n",
@@ -137,8 +160,9 @@ int main(void)
 
         /* 100 ms gap — short enough to fit comfortably in the systemd
          * oneshot timeout, long enough for the CH340 + USB stack to
-         * settle between writes. */
-        usleep(RETRY_USEC);
+         * settle between writes.  Skipped after the last attempt. */
+        if (i < REPEATS - 1)
+            usleep(RETRY_USEC);
     }
 
     /* One final drain + flush so nothing lingers if a follow-up open()
@@ -149,14 +173,19 @@ int main(void)
 
     if (ok_count == 0) {
         fprintf(stderr,
-                "safeCutOffPower64: every write to %s failed.\n"
-                "  The MCU did NOT receive the cut-off signal.\n",
-                SERIAL_PORT);
+                "safeCutOffPower64: no copy of 'power_off' was reliably "
+                "written to %s.\n"
+                "  The MCU did NOT receive the cut-off signal: the system will "
+                "halt from the OS side, but the 5 V rail will stay HOT.\n"
+                "  Check the USB cable to the DeskPi board and that %s is "
+                "the right port.\n",
+                SERIAL_PORT, SERIAL_PORT);
         return 1;
     }
 
-    fprintf(stderr,
-            "safeCutOffPower64: 'power_off' written %d/%d times to %s.\n",
-            ok_count, REPEATS, SERIAL_PORT);
+    fprintf(stdout,
+            "safeCutOffPower64: 'power_off' delivered %d/%d times — the MCU "
+            "will cut the 5 V rail in ~15 s.\n",
+            ok_count, REPEATS);
     return 0;
 }

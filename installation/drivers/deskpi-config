@@ -119,33 +119,72 @@ current_temp() {
     fi
 }
 
-# ---- temperature→PWM curve wizard ----------------------------------------
+# ---- temperature→fan-level wizard -----------------------------------------
 set_curve() {
-    say "Define a 4-step temperature→PWM curve"
-    printf '   %s(defaults: 40/25  50/50  65/75  75/100)%s\n\n' "$C_DIM" "$C_RESET"
+    say "Define the fan curve — 4 temperature points"
+    printf '   %sFan speeds are fixed: 0 / 25 / 50 / 75 / 100 %%\n' "$C_DIM"
+    printf '   %s(defaults: 40 / 50 / 65 / 75)%s\n\n' "$C_DIM" "$C_RESET"
+
+    # Preserve the user's log_fan_changes = 1 across the rewrite (the
+    # wizard truncates the file); anything else reverts to the default 0.
+    local old_log=0
+    [ -f "$CONF_FILE" ] && \
+        old_log=$(awk '$1 == "log_fan_changes" { print $3; exit }' "$CONF_FILE" 2>/dev/null)
 
     # install(1) truncates and creates with the requested mode in one step.
-    sudo install -m 666 /dev/null "$CONF_FILE"
+    sudo install -m 0644 /dev/null "$CONF_FILE"
 
-    local i temp speed
-    for i in 1 2 3 4; do
+    # All documentation lives in one grouped header at the top of the file.
+    # The log_fan_changes line is appended at the end of the file after the
+    # curve — commented-out by default so the user only has to uncomment it
+    # (or uncommented, if it was already enabled).
+    {
+        printf '# /etc/deskpi.conf — DeskPi Pro fan curve\n'
+        printf '#\n'
+        printf '# Fan curve: one "fan_N = TEMPERATURE" line per level, where\n'
+        printf '# TEMPERATURE is the CPU temperature (degC) up to which that\n'
+        printf '# level applies. Above the last line (fan_75) the fan runs at\n'
+        printf '# 100 %%. Values must not decrease; blank lines and #-comments\n'
+        printf '# are ignored.\n'
+        printf '#\n'
+        printf '# Optional: log_fan_changes = 1 — journal a line on every fan\n'
+        printf '# level change (e.g. "fan 25 %% -> 50 %% at 62 degC").\n'
+        printf '# Default: 0 (silent). Uncomment the last line to enable it.\n'
+        printf '\n'
+    } | sudo tee "$CONF_FILE" >/dev/null
+
+    local level temp prev=0
+    for level in 0 25 50 75; do
+        local default_temp
+        case "$level" in
+            0)  default_temp=40 ;;
+            25) default_temp=50 ;;
+            50) default_temp=65 ;;
+            75) default_temp=75 ;;
+        esac
         printf '   %sCPU temperature now: %s%s\n' \
             "$C_DIM" "$(current_temp)" "$C_RESET"
         while :; do
-            read -r -p "   Temperature threshold #$i (degC, 0-110): " temp
+            read -r -p "   fan_${level}: ${level} %% applies up to (degC, ${prev}-110, default ${default_temp}): " temp
+            [ -z "$temp" ] && temp="$default_temp"
             [[ "$temp" =~ ^[0-9]+$ ]] || { warn "Please enter a non-negative integer."; continue; }
             [ "$temp" -le 110 ] || { warn "Out of range (0-110)."; continue; }
+            [ "$temp" -ge "$prev" ] || { warn "Must not be lower than the previous level (${prev} degC)."; continue; }
             break
         done
-        while :; do
-            read -r -p "   Fan speed           #$i (0-100): " speed
-            [[ "$speed" =~ ^[0-9]+$ ]] || { warn "Please enter a non-negative integer."; continue; }
-            [ "$speed" -le 100 ] || { warn "Out of range (0-100)."; continue; }
-            break
-        done
-        printf '%s\n%s\n' "$temp" "$speed" | sudo tee -a "$CONF_FILE" >/dev/null
-        printf '\n'
+        printf 'fan_%s = %s\n' "$level" "$temp" | sudo tee -a "$CONF_FILE" >/dev/null
+        if [ "$level" -lt 75 ]; then
+            printf '   %s→ %s %% above %s degC%s\n' "$C_DIM" "$((level + 25))" "$temp" "$C_RESET"
+        else
+            printf '   %s→ 100 %% (pwm_100) above %s degC%s\n' "$C_DIM" "$temp" "$C_RESET"
+        fi
+        prev=$temp
     done
+    if [ "$old_log" = "1" ]; then
+        printf 'log_fan_changes = 1\n' | sudo tee -a "$CONF_FILE" >/dev/null
+    else
+        printf '# log_fan_changes = 1\n' | sudo tee -a "$CONF_FILE" >/dev/null
+    fi
     ok "Wrote $CONF_FILE"
 }
 
@@ -168,15 +207,15 @@ menu() {
     fi
     printf '\n'
     printf '%sManual fan-speed levels%s\n' "$C_BOLD" "$C_RESET"
-    printf '   1)   25 %%   (pwm_025)\n'
-    printf '   2)   50 %%   (pwm_050)\n'
-    printf '   3)   75 %%   (pwm_075)\n'
-    printf '   4)  100 %%   (pwm_100)\n'
-    printf '   5)  OFF     (pwm_000)\n'
+    printf '   1)  OFF      (pwm_000)\n'
+    printf '   2)   25 %%   (pwm_025)\n'
+    printf '   3)   50 %%   (pwm_050)\n'
+    printf '   4)   75 %%   (pwm_075)\n'
+    printf '   5)  100 %%   (pwm_100)\n'
     printf '\n'
     printf '%sConfiguration%s\n' "$C_BOLD" "$C_RESET"
-    printf '   6)  Custom temperature→PWM curve\n'
-    printf '   7)  Restore automatic fan control\n'
+    printf '   6)  Custom fan curve (4 temperature points; 100 %% above the last)\n'
+    printf '   7)  Restore automatic fan control (default curve)\n'
     printf '\n'
     printf '   0)  Quit\n\n'
 }
@@ -196,11 +235,11 @@ while :; do
     menu
     read -r -p "Your choice: " choice
     case "${choice:-}" in
-        1) apply_level 25  pwm_025 ;;
-        2) apply_level 50  pwm_050 ;;
-        3) apply_level 75  pwm_075 ;;
-        4) apply_level 100 pwm_100 ;;
-        5) apply_level 0   pwm_000 ;;
+        1) apply_level 0   pwm_000 ;;
+        2) apply_level 25  pwm_025 ;;
+        3) apply_level 50  pwm_050 ;;
+        4) apply_level 75  pwm_075 ;;
+        5) apply_level 100 pwm_100 ;;
         6)
             say "Stopping $FAN_SERVICE to write a custom curve"
             stop_daemon || true
@@ -212,7 +251,7 @@ while :; do
         7)
             say "Restoring automatic fan control"
             # Drop the custom curve so the daemon falls back to the
-            # built-in default curve defined in pwmFanControl_v2.c.
+            # built-in default curve defined in pwmFanControl_v3.c.
             sudo rm -f "$CONF_FILE"
             if [ -e "$CONF_FILE" ]; then
                 warn "Could not remove $CONF_FILE — check permissions."

@@ -32,12 +32,20 @@ which OS you pick.
 
 | Component | Path | Role |
 |-----------|------|------|
-| `pwmFanControl64V2` | `/usr/bin/pwmFanControl64V2` | Fan daemon. Reads CPU temperature, sends `pwm_NNN` to the MCU. Also listens for `poweroff` from the MCU and calls `systemctl poweroff`. |
+| `pwmFanControl64V3` | `/usr/bin/pwmFanControl64V3` | Fan daemon. Reads CPU temperature, sends `pwm_NNN` to the MCU. Also listens for `poweroff` from the MCU and calls `systemctl poweroff`. |
 | `safeCutOffPower64` | `/usr/bin/safeCutOffPower64` | One-shot helper. Writes 9 bytes of `power_off` to the MCU so it cuts the 5 V rail ~15 s later. |
 | `deskpi-config` | `/usr/bin/deskpi-config` | Interactive fan-speed configurator (the TUI you get with `sudo deskpi-config`). |
 | `deskpi.service` | `/etc/systemd/system/deskpi.service` | `Type=simple` long-running fan daemon. |
-| `deskpi-cut-off-power.service` | `/etc/systemd/system/deskpi-cut-off-power.service` | `Type=oneshot` service, `WantedBy=halt.target shutdown.target poweroff.target`, `Conflicts=reboot.target`. Runs `safeCutOffPower64` during the shutdown sequence. |
-| `dtoverlay=dwc2,dr_mode=host` | `/boot/firmware/config.txt` (or `/boot/config.txt` on legacy layouts) | Enables the dwc2 host-mode overlay so the on-board CH340 enumerates as `/dev/ttyUSB0`. |
+| `deskpi-cut-off-power.service` | `/etc/systemd/system/deskpi-cut-off-power.service` | `Type=oneshot` service, `WantedBy=halt.target shutdown.target poweroff.target`, `Conflicts=reboot.target`. Runs the shutdown helper during the shutdown sequence. |
+| `deskpi-shutdown-helper` | `/usr/bin/deskpi-shutdown-helper` | Wrapper around `safeCutOffPower64`; logs every shutdown event to `/var/log/deskpi-shutdown.log` and journald. |
+| `deskpi.logrotate` | `/etc/logrotate.d/deskpi` | Monthly rotation (3 compressed archives) of `/var/log/deskpi-shutdown.log`. |
+| `dtoverlay=dwc2,dr_mode=host` | `/boot/firmware/config.txt` (or `/boot/config.txt` on legacy layouts) | Enables the dwc2 host-mode overlay so the on-board CH340 enumerates as `/dev/ttyUSB0`. Inserted into the global section (before the first `[…]` filter) and marked with a `# DeskPi` comment. The installer shows the exact diff and asks `[y/N]` before writing; the uninstaller lists the lines it removes and asks the same way. |
+
+Both `/boot/…/config.txt` and `/etc/deskpi.conf` are never modified
+silently: installers show a unified diff of the intended change and
+uninstallers list the exact lines (or file contents) to be removed —
+each step requires an explicit `[y/N]` confirmation, and an empty
+answer leaves the file untouched.
 
 > If `systemctl list-unit-files` shows `deskpi.service` but not
 > `deskpi-cut-off-power.service`, the OS will halt but the 5 V rail will
@@ -67,13 +75,14 @@ Each per-distro script accepts `--auto-reboot` and `--help`.
 ├── install.sh                 # unified installer (auto-detects, prompts)
 ├── uninstall.sh               # unified uninstaller (auto-detects, prompts)
 ├── deskpi-config              # canonical interactive configurator
+├── deskpi.logrotate  # logrotate policy for /var/log/deskpi-shutdown.log
 ├── DietPi/
 │   ├── install-dietPi-64bit.sh
 │   └── uninstall-dietPi-64bit.sh
 ├── drivers/
 │   ├── c/
 │   │   ├── Makefile
-│   │   ├── pwmFanControl_v2.c     # fan daemon (default on every supported distro)
+│   │   ├── pwmFanControl_v3.c     # fan daemon (default on every supported distro)
 │   │   └── safeCutOffPower.c      # one-shot cut-off helper
 │   ├── deskpi-config          # mirror of the canonical configurator
 │   ├── Deskpi-uninstall       # legacy menu-driven uninstaller

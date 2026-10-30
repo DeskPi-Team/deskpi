@@ -3,10 +3,20 @@
 # deskpi-shutdown-helper
 # https://github.com/DeskPi-Team/deskpi
 #
-# Wrapper invoked by deskpi-cut-off-power.service. Writes a structured
-# log line to /var/log/deskpi-shutdown.log before and after running
-# safeCutOffPower64, so the user has a queryable history of every
-# shutdown.
+# Wrapper invoked by deskpi-cut-off-power.service. Every event is written
+# BOTH to /var/log/deskpi-shutdown.log (persistent, queryable history of
+# every shutdown) and to stdout (journald, unit deskpi-cut-off-power.service),
+# so the user can reconstruct the full story from either place:
+#
+#   BEGIN  — service started, the 'power_off' token is about to be sent
+#   ATTEMPT/RESULT lines come from safeCutOffPower64 itself (its stderr is
+#          captured and re-emitted here with a timestamp)
+#   DELIVERED / FAILED — outcome of the token send
+#   HOLD   — waiting so the MCU (15 s timer) can cut the 5 V rail
+#   END    — only ever reached when the rail was NOT cut: if the MCU did
+#            its job, the SoC loses power mid-hold and this process dies
+#            before writing END.  An END line in the log is therefore a
+#            "power stayed on" diagnostic, not a routine confirmation.
 #
 # Why a wrapper?  systemd's parser expands $? and $rc in unit files as
 # environment-variable lookups, which fails at unit-load time.  The
@@ -34,27 +44,36 @@ CUT_OFF_HOLD_SECONDS="${DESKPI_CUT_OFF_HOLD_SECONDS:-18}"
 mkdir -p "$(dirname "$LOG")"
 touch "$LOG"
 
+# Log one event line to the persistent file AND to journald (stdout of
+# the unit is captured by systemd).  File line is timestamped.
+say() {
+    echo "$(date -Is) $*" >> "$LOG"
+    # Flush immediately: the MCU cuts the 5 V rail ~15 s after the token,
+    # and anything still sitting in the page cache is lost on the abrupt
+    # power cut — which would leave the log looking like we never ran.
+    sync "$LOG"
+    echo "deskpi-shutdown-helper: $*"
+}
+
 # Note: we deliberately do NOT use 'set -e' — we want to log even when
 # safeCutOffPower64 fails, so we capture the exit code ourselves.
-{
-    echo "$(date -Is) BEGIN power_off pid=$$ triggered_by=deskpi-cut-off-power.service hold=${CUT_OFF_HOLD_SECONDS}s"
-} >> "$LOG"
 
-"$BIN"
+say "BEGIN cut-off sequence (pid $$) — sending the 'power_off' token to the MCU via safeCutOffPower64, hold=${CUT_OFF_HOLD_SECONDS}s planned"
+
+OUT=$("$BIN" 2>&1)
 rc=$?
+[ -n "$OUT" ] && while IFS= read -r line; do say "$line"; done <<< "$OUT"
 
 if [ "$rc" -eq 0 ]; then
+    say "DELIVERED 'power_off' token received by the MCU (safeCutOffPower64 rc=0)"
     # Hold the shutdown sequence open so the MCU has time to cut 5 V.
     # If the MCU cuts the rail mid-sleep, this process is killed by the
     # kernel losing power — that's fine, we already wrote the log line.
-    {
-        echo "$(date -Is) HOLD power_off pid=$$ waiting=${CUT_OFF_HOLD_SECONDS}s for MCU to cut 5V"
-    } >> "$LOG"
+    say "HOLD waiting ${CUT_OFF_HOLD_SECONDS}s — the MCU cuts the 5 V rail ~15 s after the token; if the rail is cut mid-hold, no END line will follow (that is the success case)"
     sleep "$CUT_OFF_HOLD_SECONDS" || true
+    say "END hold elapsed, rc=$rc — REACHED means the 5 V rail was NOT cut (system kept power): check the USB cable, /dev/ttyUSB0 and the MCU"
+else
+    say "FAILED safeCutOffPower64 rc=$rc — the 'power_off' token was NOT delivered, the MCU will NOT cut the 5 V rail; the OS shuts down but power stays on. Check the USB cable and 'journalctl -u deskpi-cut-off-power.service'"
 fi
-
-{
-    echo "$(date -Is) END   power_off pid=$$ rc=$rc"
-} >> "$LOG"
 
 exit "$rc"

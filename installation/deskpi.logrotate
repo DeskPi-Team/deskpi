@@ -1,0 +1,11 @@
+# Log rotation for the DeskPi Pro shutdown diagnostic log.
+# Written by deskpi-shutdown-helper on every power-off attempt
+# (BEGIN / DELIVERED / FAILED / HOLD / END lines, ~1 KB per shutdown).
+# Missing file is fine (no shutdown happened yet); never rotate an empty one.
+/var/log/deskpi-shutdown.log {
+  rotate 3
+  monthly
+  compress
+  missingok
+  notifempty
+}

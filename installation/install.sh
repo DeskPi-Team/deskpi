@@ -12,7 +12,8 @@
 #
 # Options:
 #   --auto-reboot   Reboot automatically after a successful install
-#   --yes, -y       Skip the "Are you sure?" prompt
+#   --yes, -y       Skip the "Are you sure?" prompt and auto-confirm
+#                   the per-script [y/N] prompts
 #   --os=<distro>   Skip detection and force a specific installer
 #                   (one of: raspi | ubuntu | debian | dietpi |
 #                            kali | manjaro | fedora)
@@ -29,11 +30,11 @@ INSTALL_ROOT="$(cd "$SCRIPT_DIR" && pwd)"
 
 # ---- pretty-print helpers -------------------------------------------------
 if [ -t 1 ] && command -v tput >/dev/null && [ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]; then
-    C_RESET=$'\e[0m'; C_BOLD=$'\e[1m'; C_DIM=$'\e[2m'
-    C_RED=$'\e[31m'; C_GREEN=$'\e[32m'; C_YELLOW=$'\e[33m'; C_BLUE=$'\e[34m'; C_CYAN=$'\e[36m'
+    C_RESET=$'\e[0m'; C_BOLD=$'\e[1m'
+    C_RED=$'\e[31m'; C_GREEN=$'\e[32m'; C_YELLOW=$'\e[33m'; C_CYAN=$'\e[36m'
 else
-    C_RESET=""; C_BOLD=""; C_DIM=""
-    C_RED=""; C_GREEN=""; C_YELLOW=""; C_BLUE=""; C_CYAN=""
+    C_RESET=""; C_BOLD=""
+    C_RED=""; C_GREEN=""; C_YELLOW=""; C_CYAN=""
 fi
 
 say()  { printf '%s==>%s %s\n' "$C_BOLD$C_CYAN" "$C_RESET" "$*"; }
@@ -51,7 +52,9 @@ ${C_BOLD}Usage:${C_RESET} sudo $0 [options]
 
 ${C_BOLD}Options:${C_RESET}
   --auto-reboot       Reboot automatically after a successful install
-  --yes, -y           Skip the "Are you sure?" confirmation prompt
+  --yes, -y           Skip the "Are you sure?" confirmation prompt and
+                      auto-confirm the per-script [y/N] prompts
+                      (config.txt, /etc/deskpi.conf)
   --os=<distro>       Skip detection and force a specific installer.
                       Supported values:
                         raspi     Raspberry Pi OS (any 64-bit release)
@@ -286,8 +289,9 @@ printf '  dwc2 overlay    : %s%s%s\n' \
 printf '  Build tools     : gcc=%s git=%s make=%s\n' "$HAS_GCC" "$HAS_GIT" "$HAS_MAKE"
 printf '\n'
 printf '%sWhat will be installed%s\n' "$C_BOLD" "$C_RESET"
-printf '  Binaries in /usr/bin/ :  pwmFanControl64V2  safeCutOffPower64  deskpi-config\n'
+printf '  Binaries in /usr/bin/ :  pwmFanControl64V3  safeCutOffPower64  deskpi-config\n'
 printf '  systemd units         :  deskpi.service  deskpi-cut-off-power.service\n'
+printf '  logrotate config      :  /etc/logrotate.d/deskpi\n'
 printf '  boot config           :  dtoverlay=dwc2,dr_mode=host (added to %s)\n' \
     "$([ "$HAS_DWC2_OVERLAY" = "yes" ] && echo "${DWC2_CONFIG_TXT:-/boot/firmware/config.txt}" || echo "/boot/firmware/config.txt or /boot/config.txt, whichever exists")"
 printf '\n'
@@ -332,6 +336,10 @@ fi
 # ---- dispatch -------------------------------------------------------------
 [ -x "$DISTRO_INSTALLER" ] || chmod +x "$DISTRO_INSTALLER"
 say "Dispatching to: $DISTRO_INSTALLER"
-exec "$DISTRO_INSTALLER" \
-    $([ "$AUTO_REBOOT" = "1" ] && echo "--auto-reboot") \
-    $([ "$VERBOSE"    = "1" ] && echo "--verbose")
+EXTRA_ARGS=()
+[ "$AUTO_REBOOT" = "1" ] && EXTRA_ARGS+=("--auto-reboot")
+[ "$VERBOSE"    = "1" ] && EXTRA_ARGS+=("--verbose")
+# Propagate --yes: the per-distro installers ask their own [y/N] prompts
+# before touching config.txt; assume yes for all of them.
+[ "$YES" = "1" ] && export DESKPI_ASSUME_YES=1
+exec "$DISTRO_INSTALLER" "${EXTRA_ARGS[@]}"

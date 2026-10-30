@@ -1,4 +1,5 @@
 # functions needed for deskpi-config
+# shellcheck shell=sh
 # derived from https://www.apt-browse.org/browse/ubuntu/trusty/main/all/lsb-base/4.1+Debian11ubuntu6/file/lib/lsb/init-functions
 #
 #Copyright (c) 2002-08 Chris Lawrence
@@ -31,6 +32,6 @@ log_action_msg_pre () { :; }
 log_action_msg_post () { :; }
 log_action_msg () {
     log_action_msg_pre "$@"
-    echo "$@." || true
+    echo "$*." || true
     log_action_msg_post "$@"
 }

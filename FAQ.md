@@ -19,6 +19,58 @@ This command lists all the USB devices in a tree, and for each of the hard drive
   To pin the fan at a specific speed, run `sudo deskpi-config` and pick
   one of the static levels from the menu.
 
+## How do I customize the fan curve in `/etc/deskpi.conf`?
+* The daemon reads `/etc/deskpi.conf` **once at start-up** — after
+  editing the file run `sudo systemctl restart deskpi.service`.
+* The file is human-readable: one `fan_N = TEMPERATURE` line per fan
+  level, where TEMPERATURE is the CPU temperature (°C) **up to which**
+  that level applies. Above the last line the fan runs at 100 %.
+  `deskpi-config` writes the file with a documentation header and a
+  commented-out logging option at the end:
+  ```
+  # /etc/deskpi.conf — DeskPi Pro fan curve
+  #
+  # Fan curve: one "fan_N = TEMPERATURE" line per level, where
+  # TEMPERATURE is the CPU temperature (degC) up to which that
+  # level applies. Above the last line (fan_75) the fan runs at
+  # 100 %. Values must not decrease; blank lines and #-comments
+  # are ignored.
+  #
+  # Optional: log_fan_changes = 1 — journal a line on every fan
+  # level change (e.g. "fan 25 % -> 50 % at 62 degC").
+  # Default: 0 (silent). Uncomment the last line to enable it.
+
+  fan_0 = 40
+  fan_25 = 50
+  fan_50 = 65
+  fan_75 = 75
+  # log_fan_changes = 1
+  ```
+  The fan speeds themselves are fixed at 0 / 25 / 50 / 75 / 100 % —
+  only the four temperatures are configurable. There is deliberately
+  **no `fan_100` key**: the top level has no upper bound, its
+  switch-on point *is* `fan_75`.
+* Optional key `log_fan_changes = 1` journals a line on every fan
+  level change with the temperature that triggered it, e.g.
+  `pwmFanControl64V3: fan 25 % -> 50 % at 62 degC`
+  (`journalctl -u deskpi.service`). Default is `0` (silent) — to
+  enable it, uncomment the `# log_fan_changes = 1` line at the end of
+  the file.
+* You cannot break anything by hand-editing: every inconsistency is
+  reported in the journal and repaired — garbage lines and unknown
+  keys are skipped (with a warning), values are clamped to 1–110 °C,
+  repeated keys keep the **first** value, and a non-increasing
+  temperature sequence (e.g. `fan_0 = 75` with `fan_75 = 30`) is
+  pushed back into a monotonic curve. If the file is missing or
+  unreadable, the built-in defaults (40 / 50 / 65 / 75) apply.
+* The interactive way: `sudo deskpi-config`, option **6** — it asks
+  for the four temperatures in sequence (`fan_0` → `fan_25` →
+  `fan_50` → `fan_75`, each prompt showing which level comes next and
+  ending with "100 % (pwm_100) above <fan_75> degC") and writes the
+  file for you with mode `0644`, the documentation header shown above,
+  and a commented-out `# log_fan_changes = 1` at the end (an already
+  enabled `log_fan_changes = 1` is preserved uncommented).
+
 ## What are the credentials on the pre-installed Raspbian OS image?
 * Username: `pi`, password: `raspberry`. This is the standard Raspbian
   default; the DeskPi team does not change it when distributing the
@@ -36,7 +88,10 @@ This command lists all the USB devices in a tree, and for each of the hard drive
 * That is almost always because `dtoverlay=dwc2,dr_mode=host` is
   missing from `/boot/firmware/config.txt` (or `/boot/config.txt` on
   legacy layouts). Add that line and reboot. The unified installer
-  adds it for you automatically.
+  adds it for you — it shows the exact diff and asks for confirmation
+  first, and marks the inserted block with a `# DeskPi` comment so it
+  is easy to find (and cleanly removed by the uninstaller, which asks
+  the same way).
 
 ## How do I change the hostname on the pre-installed Raspbian OS image?
 * Either run `sudo raspi-config` and pick **System Options** → **S4
@@ -69,13 +124,14 @@ This command lists all the USB devices in a tree, and for each of the hard drive
 * The DeskPi Pro daughter board cuts the 5 V rail **only when it receives the literal byte sequence `power_off` over `/dev/ttyUSB0` during the shutdown sequence**. The OS-level `systemctl poweroff` only halts the CPU; on a Raspberry Pi 4 the firmware leaves 5 V on by default (`POWER_OFF_ON_HALT=0` in the EEPROM config) and relies on the DeskPi Pro's MCU to do the actual cut.
 * A correct installation must therefore have **two** systemd units:
   1. `deskpi.service` — runs at boot, monitors the MCU for `poweroff`, calls `systemctl poweroff` when it sees it.
-  2. `deskpi-cut-off-power.service` — `Type=oneshot`, `WantedBy=poweroff.target`, `Before=halt.target shutdown.target poweroff.target`, `Conflicts=reboot.target`. When systemd processes the power-off, this service starts first, runs `/usr/bin/safeCutOffPower64` (which writes 9 bytes of `power_off` to the MCU), and exits cleanly in ~60 ms. The MCU then waits ~15 s and cuts the 5 V rail.
+  2. `deskpi-cut-off-power.service` — `Type=oneshot`, `WantedBy=poweroff.target`, `Before=halt.target shutdown.target poweroff.target`, `Conflicts=reboot.target`. When systemd processes the power-off, this service starts first, runs `/usr/bin/deskpi-shutdown-helper` (which invokes `/usr/bin/safeCutOffPower64` to write 9 bytes of `power_off` to the MCU, then holds the shutdown open for ~18 s). The MCU waits ~15 s and cuts the 5 V rail.
 * If only one of those two is present, you get exactly the symptoms above (OS halts, but the DeskPi Pro stays powered). The fix is to re-run the installer — the unified `sudo ./install.sh` is the easiest entry point; it auto-detects your OS and deploys both units. Verify with:
   ```bash
   systemctl is-enabled  deskpi.service                  # enabled
   systemctl is-enabled  deskpi-cut-off-power.service    # enabled
-  ls -l /usr/bin/safeCutOffPower64 /usr/bin/pwmFanControl64V2
+  ls -l /usr/bin/safeCutOffPower64 /usr/bin/pwmFanControl64V3
   ```
+* The full shutdown event history is in `/var/log/deskpi-shutdown.log` and `journalctl -u deskpi-cut-off-power.service`. Note that a *successful* cut-off never writes an `END` line — the SoC loses power mid-hold; an `END` line means the rail was **not** cut. The file is rotated automatically by logrotate (monthly, 3 compressed archives kept).
 * You can also exercise the cut-off unit in isolation (this **will** trigger the MCU to cut 5 V ~15 s later, so only do it when you are ready to power-cycle the Pi):
   ```bash
   sudo systemctl start deskpi-cut-off-power.service
@@ -84,7 +140,7 @@ This command lists all the USB devices in a tree, and for each of the hard drive
   ```bash
   sudo strace -e openat,write /usr/bin/safeCutOffPower64
   # expected last lines:
-  # openat(AT_FDCWD, "/dev/ttyUSB0", O_RDWR|O_NOCTTY) = 3
+  # openat(AT_FDCWD, "/dev/ttyUSB0", O_RDWR|O_NOCTTY|O_SYNC) = 3
   # write(3, "power_off", 9) = 9
   # +++ exited with 0 +++
   ```
